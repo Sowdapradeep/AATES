@@ -1,10 +1,17 @@
 import uuid
 from datetime import datetime
 from typing import Any
-from sqlalchemy import Column, String, Boolean, DateTime, Integer, Float, ForeignKey, Table, Text
+from sqlalchemy import Column, String, Boolean, DateTime, Integer, Float, ForeignKey, Table, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.ext.compiler import compiles
 from core.database.session import Base
+
+@compiles(JSONB, "sqlite")
+def compile_jsonb_sqlite(element, compiler, **kw):
+    """Compiles PostgreSQL JSONB to standard JSON string when executing on SQLite dialect (testing)."""
+    return "JSON"
+
 
 # Many-to-Many Join Tables
 user_roles = Table(
