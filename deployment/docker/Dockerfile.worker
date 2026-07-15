@@ -1,0 +1,24 @@
+# Stage 1: Build stage
+FROM python:3.12-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache gcc musl-dev postgresql-dev libffi-dev
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Stage 2: Runtime stage
+FROM python:3.12-alpine AS runner
+
+WORKDIR /app
+
+RUN apk add --no-cache libpq
+
+COPY --from=builder /root/.local /root/.local
+COPY . .
+
+ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONUNBUFFERED=1
+
+CMD ["python", "apps/worker/main.py"]
