@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --background: #030307;
+  --foreground: #f4f4f9;
+  --card: #0c0c16;
+  --card-border: #1e1e35;
+  --accent-primary: #a78bfa;
+  --accent-secondary: #f472b6;
+}
+
+body {
+  background: #030307;
+  background-image: radial-gradient(at 0% 0%, rgba(167, 139, 250, 0.12) 0px, transparent 50%),
+                    radial-gradient(at 100% 100%, rgba(244, 114, 182, 0.08) 0px, transparent 50%);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* Glassmorphic Panel Styles */
+.glass-panel {
+  background: rgba(12, 12, 22, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-card {
+  background: rgba(20, 20, 35, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
