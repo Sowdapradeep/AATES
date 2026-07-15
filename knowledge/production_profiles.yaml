@@ -1,0 +1,26 @@
+cinematic:
+  shot_frequency: 4.5
+  camera_movement: "slow dolly tracking"
+  music_intensity: 0.6
+  transition_speed: 1.5
+  subtitle_animation: "fade_in"
+  color_grading: "warm_cinematic"
+  editing_rhythm: "slow"
+
+fast_paced:
+  shot_frequency: 2.0
+  camera_movement: "handheld shake quick-pan"
+  music_intensity: 0.9
+  transition_speed: 0.4
+  subtitle_animation: "pop_up"
+  color_grading: "saturated_contrast"
+  editing_rhythm: "rapid"
+
+thriller:
+  shot_frequency: 3.0
+  camera_movement: "slow creep zoom-in"
+  music_intensity: 0.8
+  transition_speed: 0.8
+  subtitle_animation: "glitch"
+  color_grading: "low_key_cold_blue"
+  editing_rhythm: "suspenseful"

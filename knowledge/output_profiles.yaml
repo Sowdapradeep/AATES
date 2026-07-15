@@ -1,0 +1,35 @@
+instagram_reel:
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  frame_rate: 30
+  max_duration: 90.0
+  subtitle_style: "bold_center_yellow"
+  safe_text_area:
+    top: 0.15
+    bottom: 0.15
+    left: 0.1
+    right: 0.1
+  intro_duration: 1.5
+  outro_duration: 2.0
+  thumbnail_frame_strategy: "highest_contrast_frame"
+  audio_loudness_target: -14.0
+  video_codec: "h264"
+  export_preset: "slow"
+
+youtube_short:
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  frame_rate: 30
+  max_duration: 60.0
+  subtitle_style: "bold_center_white"
+  safe_text_area:
+    top: 0.1
+    bottom: 0.2
+    left: 0.1
+    right: 0.1
+  intro_duration: 1.0
+  outro_duration: 1.5
+  thumbnail_frame_strategy: "first_frame"
+  audio_loudness_target: -14.0
+  video_codec: "h264"
+  export_preset: "slow"

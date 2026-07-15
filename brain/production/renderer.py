@@ -4,9 +4,11 @@ from typing import Any
 from sqlalchemy.orm import Session
 from contracts.dto.manifest import RenderManifestDTO, ScenePackageDTO, RenderTimelineEvent
 from providers.rendering.mock import MockRenderingProvider
+from brain.production.profiles import profile_loader
+from brain.production.timing import scene_timing_engine
 
 class RenderManifestCompiler:
-    """Core Render Manifest Compiler compiling scene timeline assets specifications."""
+    """Core Render Manifest Compiler compiling scene timeline assets specifications under output profiles settings."""
     
     async def compile_manifest(
         self,
@@ -14,18 +16,32 @@ class RenderManifestCompiler:
         universe_id: str,
         season: int,
         episode: int,
-        scene_packages: list[ScenePackageDTO]
+        scene_packages: list[ScenePackageDTO],
+        output_profile_name: str = "instagram_reel",
+        production_profile_name: str = "cinematic"
     ) -> RenderManifestDTO:
-        """Assembles completed scene packages and audio transitions offsets into a single JSON manifest."""
-        timeline_events = []
-        current_offset = 0.0
+        """Assembles completed scene packages, applying scene pacing timing and target output aspect ratios."""
+        # 1. Load output profile configs
+        out_prof = profile_loader.load_output_profile(output_profile_name)
         
-        for pkg in scene_packages:
+        # 2. Calculate dynamic paced durations
+        scene_durations = scene_timing_engine.calculate_scene_durations(
+            scene_count=len(scene_packages),
+            output_profile_name=output_profile_name,
+            production_profile_name=production_profile_name
+        )
+
+        timeline_events = []
+        current_offset = out_prof.get("intro_duration", 1.5)
+        
+        for idx, pkg in enumerate(scene_packages):
+            duration = scene_durations[idx] if idx < len(scene_durations) else 4.0
+            
             # Video track event
             timeline_events.append(
                 RenderTimelineEvent(
                     time_offset=current_offset,
-                    duration=4.0,
+                    duration=duration,
                     asset_id=pkg.video_asset_id,
                     asset_type="video"
                 )
@@ -35,7 +51,7 @@ class RenderManifestCompiler:
                 timeline_events.append(
                     RenderTimelineEvent(
                         time_offset=current_offset,
-                        duration=3.5,
+                        duration=duration - 0.5 if duration > 1.0 else duration,
                         asset_id=voice_id,
                         asset_type="voice"
                     )
@@ -45,13 +61,13 @@ class RenderManifestCompiler:
                 timeline_events.append(
                     RenderTimelineEvent(
                         time_offset=current_offset,
-                        duration=4.0,
+                        duration=duration,
                         asset_id=pkg.music_asset_id,
                         asset_type="music",
                         volume=0.3
                     )
                 )
-            current_offset += 4.0
+            current_offset += duration
 
         raw_manifest_str = f"manifest-{episode_id}-{len(scene_packages)}-{current_offset}"
         checksum_val = hashlib.sha256(raw_manifest_str.encode()).hexdigest()
@@ -63,14 +79,23 @@ class RenderManifestCompiler:
             episode=episode,
             scene_packages=scene_packages,
             timeline_events=timeline_events,
-            render_settings={"resolution": "1080p", "fps": 24},
-            output_settings={"codec": "h264", "container": "mp4"},
+            render_settings={
+                "resolution": out_prof.get("resolution", "1080x1920"),
+                "fps": out_prof.get("frame_rate", 30),
+                "aspect_ratio": out_prof.get("aspect_ratio", "9:16"),
+                "audio_loudness": out_prof.get("audio_loudness_target", -14.0)
+            },
+            output_settings={
+                "codec": out_prof.get("video_codec", "h264"),
+                "container": "mp4",
+                "export_preset": out_prof.get("export_preset", "slow")
+            },
             version=1,
             checksum=checksum_val
         )
 
 class FFmpegRenderingEngine:
-    """Core FFmpeg Rendering Engine executing audio-video mixes and concatenations."""
+    """Core FFmpeg Rendering Engine executing audio-video mixes and concatenations under output aspect ratio constraints."""
     
     def __init__(self, provider: Any = None):
         self.provider = provider or MockRenderingProvider()
@@ -90,7 +115,11 @@ class FFmpegRenderingEngine:
             )
             mixed_videos.append(mix_res["storage_location"])
 
-        reel_res = await self.provider.concatenate_scenes(scene_video_locations=mixed_videos)
+        reel_res = await self.provider.concatenate_scenes(
+            scene_video_locations=mixed_videos,
+            resolution=manifest.render_settings.get("resolution", "1080x1920"),
+            aspect_ratio=manifest.render_settings.get("aspect_ratio", "9:16")
+        )
         
         # Build Asset metadata row
         from core.database.models import Asset
@@ -105,7 +134,7 @@ class FFmpegRenderingEngine:
             prompt_version="1.0.0",
             prompt_hash=manifest.checksum,
             seed=None,
-            resolution="1920x1080",
+            resolution=manifest.render_settings.get("resolution", "1080x1920"),
             duration=len(manifest.scene_packages) * 4.0,
             storage_location=reel_res["storage_location"],
             episode_id=e_uuid,

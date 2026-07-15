@@ -127,3 +127,67 @@ def test_manifest_and_ffmpeg_render(client: TestClient) -> None:
     render_res = client.post("/v1/production/render", json=manifest)
     assert render_res.status_code == 200
     assert render_res.json()["status"] == "rendered_successfully"
+
+def test_output_and_production_profiles_loading() -> None:
+    """Verifies output profiles and creative pacing characteristics loads from yaml config files."""
+    from brain.production.profiles import profile_loader
+    reel = profile_loader.load_output_profile("instagram_reel")
+    assert reel["aspect_ratio"] == "9:16"
+    assert reel["max_duration"] == 90.0
+
+    cinematic = profile_loader.load_production_profile("cinematic")
+    assert cinematic["editing_rhythm"] == "slow"
+
+def test_scene_timing_engine_calculation() -> None:
+    """Verifies that the timing engine scales durations to remain within target output limits."""
+    from brain.production.timing import scene_timing_engine
+    durations = scene_timing_engine.calculate_scene_durations(
+        scene_count=10,
+        output_profile_name="instagram_reel",
+        production_profile_name="cinematic"
+    )
+    assert len(durations) == 10
+    # Net available duration is 90.0 - 3.5 = 86.5s. Scaled durations should fit.
+    assert sum(durations) <= 86.5
+
+def test_media_versioning_and_checkpoint_recovery(db) -> None:
+    """Verifies self-referential lineage cloning and checkpoint cache retrieval flows."""
+    import uuid
+    from core.database.models import Asset
+    from brain.production.versioning import media_versioning_tracker
+    from brain.production.recovery import production_recovery
+
+    asset = Asset(
+        id=uuid.uuid4(),
+        type="video",
+        provider="MockVideoAI",
+        model="Clip-Motion-v2",
+        prompt_version="v1.0.0",
+        prompt_hash="xyz",
+        resolution="1080x1920",
+        storage_location="s3://aates-assets/videos/clip-1.mp4",
+        episode_id=uuid.uuid4(),
+        universe_id=uuid.uuid4(),
+        scene_id="scene_1",
+        blueprint_version=1,
+        checksum="sha256-original",
+        cost=0.25
+    )
+    db.add(asset)
+    db.flush()
+
+    new_asset = media_versioning_tracker.create_new_version(
+        db=db,
+        original_asset=asset,
+        regeneration_reason="QA failed visual artifact",
+        new_storage_location="s3://aates-assets/videos/clip-2.mp4",
+        new_checksum="sha256-regenerated",
+        cost=0.25
+    )
+    assert new_asset.blueprint_version == 2
+    assert new_asset.parent_asset_id == asset.id
+
+    existing = production_recovery.get_existing_scene_assets(db, asset.episode_id, "scene_1")
+    assert "video" in existing
+    assert existing["video"].blueprint_version == 2
+
