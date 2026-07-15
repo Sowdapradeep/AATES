@@ -102,7 +102,7 @@ export default function DashboardHome() {
         
         {/* Navigation Tabs */}
         <div className="flex bg-slate-900/60 p-1 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
-          {["overview", "universes", "characters", "storylines", "validators"].map((tab) => (
+          {["overview", "universes", "characters", "storylines", "validators", "blueprint"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -430,6 +430,75 @@ export default function DashboardHome() {
                   <p className="text-right text-[10px] text-violet-400">By {dec.actor}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Blueprint Tab */}
+      {activeTab === "blueprint" && (
+        <div className="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                <FileCode className="h-5 w-5 text-violet-400" /> Standardized Production Blueprint
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">Consumable package decoupling story creation from media generation</p>
+            </div>
+            <span className="text-xs font-mono bg-violet-500/10 text-violet-400 border border-violet-500/20 px-3 py-1 rounded-full">
+              Episode ID: ep-101
+            </span>
+          </div>
+
+          <div className="space-y-6">
+            <div className="p-5 rounded-xl bg-slate-900/40 border border-slate-800/60 space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                <div>
+                  <span className="text-slate-500 block">Location</span>
+                  <span className="font-semibold text-slate-200">Village Border Woods</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">Time of Day / Weather</span>
+                  <span className="font-semibold text-slate-200">DAY / SUNNY</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">Lighting Mood</span>
+                  <span className="font-semibold text-slate-200">Warm golden natural light</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block">Camera Intent</span>
+                  <span className="font-semibold text-slate-200">Establishing wide slow track</span>
+                </div>
+              </div>
+
+              <hr className="border-slate-800/60" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                <div className="space-y-2">
+                  <span className="text-violet-400 font-bold block uppercase tracking-wider text-[10px]">Characters & Costumes</span>
+                  <ul className="space-y-1 text-slate-300">
+                    <li><strong>Kadamban:</strong> Green traditional cotton shirt, rustic dhoti.</li>
+                    <li><strong>Nallasamy:</strong> Polished charcoal corporate business suit.</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-violet-400 font-bold block uppercase tracking-wider text-[10px]">Audible Elements</span>
+                  <ul className="space-y-1 text-slate-300">
+                    <li><strong>Music:</strong> Low atmospheric percussion, Tamil flute.</li>
+                    <li><strong>SFX:</strong> Forest wind blow, stakes pounding sound.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <hr className="border-slate-800/60" />
+
+              <div className="space-y-2 text-xs">
+                <span className="text-pink-400 font-bold block uppercase tracking-wider text-[10px]">Dialogue Line (Tamil Slang Adapted)</span>
+                <div className="p-3 rounded bg-slate-950/40 font-mono text-slate-300">
+                  <p className="text-slate-200"><strong>Kadamban:</strong> &quot;Idhu enga nilam. Ingu ungaluku velai illai. [MAJA!]&quot;</p>
+                  <p className="text-slate-500 mt-1">Delivery note: Quiet indignation, resolute gaze.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

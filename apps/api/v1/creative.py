@@ -11,8 +11,10 @@ from brain.creative_generator import creative_generator
 from brain.plot_engine import plot_engine
 from brain.narrative_engine import dialogue_planning_engine, tamil_narrative_engine
 from brain.validation_engine import validation_engine
+from brain.blueprint_generator import blueprint_generator
 
 router = APIRouter()
+
 
 class UniverseIn(BaseModel):
     """Input parameters for universe metadata initialization."""
@@ -98,3 +100,31 @@ async def validate_continuity(payload: ContinuityValIn, db: Session = Depends(ge
 async def validate_canon(payload: CanonValIn, db: Session = Depends(get_db)) -> ValidationResultDTO:
     """Performs compliance checking against base Story Bible rules."""
     return await validation_engine.validate_canon(payload.universe_id, payload.proposed_plot, db=db)
+
+class BlueprintIn(BaseModel):
+    """Input parameters for assembly of Production Blueprints."""
+    universe_id: str
+    season: int
+    episode: int
+    episode_id: str
+
+@router.post("/creative/blueprint")
+async def generate_blueprint(payload: BlueprintIn, db: Session = Depends(get_db)) -> Any:
+    """Compiles characters, lore, and dialogue states into a standard media-independent Production Blueprint."""
+    return await blueprint_generator.generate_blueprint(
+        universe_id=payload.universe_id,
+        season=payload.season,
+        episode=payload.episode,
+        episode_id=payload.episode_id,
+        db=db
+    )
+
+@router.get("/creative/blueprint/{episode_id}")
+def get_blueprint(episode_id: str, db: Session = Depends(get_db)) -> Any:
+    """Retrieves compiled Production Blueprint JSON specifications for downstream consumption."""
+    from core.database.models import SystemState
+    state = db.query(SystemState).filter(SystemState.state_key == f"blueprint-{episode_id}").first()
+    if not state:
+        raise HTTPException(status_code=404, detail="Production blueprint not found.")
+    return state.state_value
+

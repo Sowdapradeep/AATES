@@ -38,3 +38,28 @@ def test_creative_validators(client: TestClient) -> None:
     assert data["is_valid"] is False
     assert len(data["warnings"]) > 0
     assert "magic" in data["warnings"][0].lower()
+
+def test_blueprint_generation(client: TestClient) -> None:
+    """Verifies that the standard media-independent Production Blueprint compiles successfully."""
+    # First verify/setup universe
+    client.post(
+        "/v1/creative/universe",
+        json={"universe_id": "univ-202", "name": "Nellai Warrior", "genre": "action", "themes": ["honor"]}
+    )
+
+    response = client.post(
+        "/v1/creative/blueprint",
+        json={
+            "universe_id": "univ-202",
+            "season": 1,
+            "episode": 1,
+            "episode_id": "ep-101"
+        }
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["episode_id"] == "ep-101"
+    assert "scenes" in data
+    assert len(data["scenes"]) == 1
+    assert data["scenes"][0]["location"] == "Village Border Woods"
+

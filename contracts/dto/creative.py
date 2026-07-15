@@ -1,6 +1,13 @@
 from pydantic import BaseModel
 from typing import Any
 
+class DialogueLine(BaseModel):
+    character_name: str
+    text_tamil: str
+    text_english: str
+    slang_type: str
+    delivery_note: str | None = None
+
 class CharacterProfile(BaseModel):
     id: str
     name: str
