@@ -1,0 +1,87 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: aates-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aates
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d aates"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: aates-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/var/lib/redis/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile.api
+    container_name: aates-api
+    ports:
+      - "8000:8000"
+    environment:
+      - APP__ENV=development
+      - DB__URL=postgresql://postgres:postgres@postgres:5432/aates
+      - REDIS__URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../:/app
+
+  worker:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile.worker
+    container_name: aates-worker
+    environment:
+      - APP__ENV=development
+      - DB__URL=postgresql://postgres:postgres@postgres:5432/aates
+      - REDIS__URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../:/app
+
+  dashboard:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile.dashboard
+    container_name: aates-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    volumes:
+      - ../../apps/dashboard:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+  redis_data:
