@@ -102,7 +102,7 @@ export default function DashboardHome() {
         
         {/* Navigation Tabs */}
         <div className="flex bg-slate-900/60 p-1 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
-          {["overview", "universes", "characters", "storylines", "validators", "blueprint"].map((tab) => (
+          {["overview", "universes", "characters", "storylines", "validators", "blueprint", "production"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -498,6 +498,159 @@ export default function DashboardHome() {
                   <p className="text-slate-200"><strong>Kadamban:</strong> &quot;Idhu enga nilam. Ingu ungaluku velai illai. [MAJA!]&quot;</p>
                   <p className="text-slate-500 mt-1">Delivery note: Quiet indignation, resolute gaze.</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Production Tab */}
+      {activeTab === "production" && (
+        <div className="space-y-8">
+          {/* Top Row: Provider cost fees & Render Queue */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+              <h2 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                <Cpu className="h-5 w-5 text-violet-400" /> Provider & Costs Monitor
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-xs">
+                <div className="p-3 rounded bg-slate-900/40 border border-slate-800/50">
+                  <span className="text-slate-500 block">MockImageAI</span>
+                  <span className="text-slate-200 font-bold font-mono">$0.03 / Still</span>
+                </div>
+                <div className="p-3 rounded bg-slate-900/40 border border-slate-800/50">
+                  <span className="text-slate-500 block">MockVideoAI</span>
+                  <span className="text-slate-200 font-bold font-mono">$0.25 / Clip</span>
+                </div>
+                <div className="p-3 rounded bg-slate-900/40 border border-slate-800/50">
+                  <span className="text-slate-500 block">MockVoiceAI</span>
+                  <span className="text-slate-200 font-bold font-mono">$0.05 / Line</span>
+                </div>
+                <div className="p-3 rounded bg-slate-900/40 border border-slate-800/50">
+                  <span className="text-slate-500 block">MockMusicAI</span>
+                  <span className="text-slate-200 font-bold font-mono">$0.12 / Track</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+              <h2 className="text-lg font-semibold text-slate-200">Rendering Status</h2>
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-bold text-emerald-400">Master Reel Compiled</span>
+                  <p className="text-[10px] text-slate-500 font-mono">ID: ep-101-reel</p>
+                </div>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-500/30">
+                  PASS
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Storyboard & Shot panels */}
+          <div className="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+            <h2 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-pink-400" /> Storyboard & Shots Planner
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 space-y-2 text-xs">
+                <span className="text-violet-400 font-bold block uppercase tracking-wider text-[10px]">Storyboard Panel 1</span>
+                <p className="text-slate-300"><strong>Purpose:</strong> Establishing scene location atmosphere.</p>
+                <p className="text-slate-400"><strong>Composition:</strong> Wide screen framing, rule of thirds matching local trees outline.</p>
+                <p className="text-slate-500 font-mono">Placement: [Kadamban, Nallasamy]</p>
+              </div>
+              <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 space-y-2 text-xs">
+                <span className="text-violet-400 font-bold block uppercase tracking-wider text-[10px]">Shot Plan Specifications</span>
+                <p className="text-slate-300"><strong>Shot ID:</strong> shot_1_1</p>
+                <p className="text-slate-400"><strong>Camera Angle:</strong> slow pan-right tracking shot (establishing type)</p>
+                <p className="text-slate-500 font-mono">Duration: 5.5s | Transition: FADE</p>
+              </div>
+            </div>
+          </div>
+
+          {/* QA Quality Gates Dashboard */}
+          <div className="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+            <h2 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-400" /> Automated QA Quality Gates
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div className="p-3.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                <div className="flex justify-between font-semibold text-slate-200">
+                  <span>Character Consistency</span>
+                  <span className="text-emerald-400">PASS</span>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">Costume matches prompt parameters.</p>
+              </div>
+              <div className="p-3.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                <div className="flex justify-between font-semibold text-slate-200">
+                  <span>Audio Speech speed</span>
+                  <span className="text-emerald-400">PASS</span>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">WPS ratio within timing limits.</p>
+              </div>
+              <div className="p-3.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                <div className="flex justify-between font-semibold text-slate-200">
+                  <span>Brand Safety Check</span>
+                  <span className="text-emerald-400">PASS</span>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">No flagged keywords discovered.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Render Manifest Viewer */}
+          <div className="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+            <h2 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+              <FileCode className="h-5 w-5 text-violet-400" /> Render Manifest Viewer
+            </h2>
+            <pre className="p-4 rounded-xl bg-slate-950/60 font-mono text-[10px] text-slate-300 overflow-x-auto max-h-60 scrollbar-thin">
+{`{
+  "episode_id": "ep-101",
+  "universe_id": "univ-101",
+  "season": 1,
+  "episode": 1,
+  "scene_packages": [
+    {
+      "scene_id": "scene_1",
+      "video_asset_id": "s3://aates-assets/videos/clip-9092.mp4",
+      "voice_asset_ids": {
+        "Kadamban": "s3://aates-assets/audio/voice-3129.mp3"
+      },
+      "music_asset_id": "s3://aates-assets/audio/theme-1002.mp3",
+      "subtitle_asset_id": "s3://aates-assets/subtitles/sub-92cf3.srt",
+      "checksums": {
+        "video": "sha256-mockvideo-9092",
+        "audio": "sha256-mockvoice-3129"
+      }
+    }
+  ],
+  "render_settings": {
+    "resolution": "1080p",
+    "fps": 24
+  },
+  "version": 1
+}`}
+            </pre>
+          </div>
+
+          {/* Asset Lineage explorer */}
+          <div className="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+            <h2 className="text-lg font-semibold text-slate-200">Asset Lineage Tracking Explorer</h2>
+            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 space-y-4 text-xs font-mono">
+              <div className="flex flex-col md:flex-row md:items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20">Storyboard Frame Still</span>
+                <span className="text-slate-600">──►</span>
+                <span className="px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20">Animated Video Segment</span>
+                <span className="text-slate-600">──►</span>
+                <span className="px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20">Mixed Scene Package</span>
+                <span className="text-slate-600">──►</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">Master Reel Output (MP4)</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] text-slate-500 pt-2 border-t border-slate-800">
+                <span>Asset ID: asset_master_reel_9019</span>
+                <span>Parent Asset ID: asset_scene_package_1002</span>
+                <span>Checksum: sha256-mockreel-1022</span>
+                <span>Creation time: 2026-07-15 19:35:10</span>
               </div>
             </div>
           </div>

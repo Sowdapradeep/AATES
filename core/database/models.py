@@ -274,8 +274,14 @@ class Asset(Base):
     storage_location: Mapped[str] = mapped_column(String(255), nullable=False)
     episode_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     universe_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    scene_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    parent_asset_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("assets.id", ondelete="SET NULL"), nullable=True)
+    blueprint_version: Mapped[int] = mapped_column(Integer, default=1)
+    workflow_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
     cost: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
 
 
 # Production Queue Tables
