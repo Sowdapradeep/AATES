@@ -5,7 +5,23 @@ All notable changes to the AATES project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0-operations] - 2026-07-15
+
+### Added
+- `contracts/dto/operations.py` — Campaign, PublishRequest, PublishResult, AnalyticsSnapshot, Recommendation, ProviderHealth, and OperationsTimeline DTO schemas.
+- `providers/publishing/interface.py` — `PublishProvider` abstract interface enabling vendor-independent publishing integrations.
+- `providers/publishing/mock.py` — `MockInstagramPublisher` and `MockYouTubePublisher` simulating full upload lifecycle with health checks.
+- `brain/operations/queue.py` — `PublishingQueueManager` (prioritized queuing, duplicate prevention, retry limits) and `PublishingScheduler` (blackout windows).
+- `brain/operations/monitoring.py` — `MonitoringEngine` probing all providers and persisting health metrics.
+- `brain/operations/analytics.py` — `AnalyticsIngestor` recording immutable snapshots with performance score computation.
+- `brain/operations/learning.py` — `LearningEngine` generating strategic recommendations from performance scores, with CEO review-approval workflow.
+- `apps/api/v1/operations.py` — 10 FastAPI endpoints: campaigns, enqueue, execute, schedule check, health probe, analytics record, learning recommend, CEO review, timeline, distribution history.
+- `tests/test_operations.py` — 8 E2E tests covering the complete autonomous operations loop (all passing).
+- Operations dashboard tab in Next.js UI showing Campaign Manager, Publishing Queue, Analytics Snapshots, CEO Recommendations, Provider Health, and Operations Timeline.
+- Migrated all Operations model UUID columns to `String(36)` for SQLite compatibility.
+
 ## [0.3.1-pacing-versioning] - 2026-07-15
+
 
 ### Added
 - YAML-driven Output Profiles (`knowledge/output_profiles.yaml`) configuring Reels/Shorts aspect ratios, target resolutions, and loudness limits.

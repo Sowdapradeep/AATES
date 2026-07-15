@@ -97,7 +97,7 @@ export default function DashboardHome() {
         
         {/* Navigation Tabs */}
         <div className="flex bg-slate-900/60 p-1 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
-          {["overview", "universes", "characters", "storylines", "validators", "blueprint", "production"].map((tab) => (
+          {["overview", "universes", "characters", "storylines", "validators", "blueprint", "production", "operations"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -647,6 +647,242 @@ export default function DashboardHome() {
                 <span>Checksum: sha256-mockreel-1022</span>
                 <span>Creation time: 2026-07-15 19:35:10</span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Operations Tab */}
+      {activeTab === "operations" && (
+        <div className="space-y-8">
+          {/* Operations Header Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {[
+              { label: "Active Campaigns", value: "3", icon: "📡", color: "violet" },
+              { label: "Queued Publications", value: "12", icon: "📤", color: "blue" },
+              { label: "Analytics Snapshots", value: "47", icon: "📊", color: "emerald" },
+              { label: "CEO Decisions", value: "8", icon: "🎯", color: "pink" },
+            ].map((s) => (
+              <div key={s.label} className="glass-card rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:border-violet-500/30">
+                <div className="absolute top-0 right-0 h-24 w-24 bg-gradient-to-br from-violet-600/10 to-transparent rounded-full blur-xl"></div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{s.label}</span>
+                  <span className="text-xl">{s.icon}</span>
+                </div>
+                <div className="text-3xl font-bold text-white">{s.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Campaign Manager */}
+          <div className="glass-card rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <span className="text-violet-400">📡</span> Campaign Manager
+            </h3>
+            <div className="space-y-3">
+              {[
+                { name: "Season 1 Launch", status: "active", platforms: ["Instagram Reel", "YouTube Short"], start: "2026-07-16", episodes: 5, priority: "High" },
+                { name: "Kadamban Character Intro", status: "draft", platforms: ["Instagram Reel"], start: "2026-07-20", episodes: 3, priority: "Medium" },
+                { name: "Finale Event Campaign", status: "draft", platforms: ["Instagram Reel", "YouTube Short"], start: "2026-08-01", episodes: 1, priority: "Critical" },
+              ].map((c) => (
+                <div key={c.name} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl bg-slate-900/60 border border-slate-800 gap-3">
+                  <div className="space-y-1">
+                    <div className="font-semibold text-white text-sm">{c.name}</div>
+                    <div className="flex gap-2 flex-wrap">
+                      {c.platforms.map((p) => (
+                        <span key={p} className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">{p}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="text-slate-400">{c.episodes} episodes</span>
+                    <span className="text-slate-400">Starts {c.start}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                      c.priority === "Critical" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                      c.priority === "High" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" :
+                      "bg-slate-700/50 text-slate-400 border-slate-700"
+                    }`}>{c.priority}</span>
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold border ${
+                      c.status === "active" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                      "bg-slate-700/50 text-slate-400 border-slate-700"
+                    }`}>{c.status.toUpperCase()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Publishing Queue */}
+          <div className="glass-card rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <span className="text-blue-400">📤</span> Publishing Queue
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-slate-500 border-b border-slate-800">
+                    <th className="text-left py-2 pr-4">Episode</th>
+                    <th className="text-left py-2 pr-4">Platform</th>
+                    <th className="text-left py-2 pr-4">Status</th>
+                    <th className="text-left py-2 pr-4">Scheduled</th>
+                    <th className="text-left py-2">Retries</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {[
+                    { ep: "S01E01", platform: "Instagram Reel", status: "success", scheduled: "09:00", retries: 0 },
+                    { ep: "S01E02", platform: "YouTube Short", status: "queued", scheduled: "09:30", retries: 0 },
+                    { ep: "S01E03", platform: "Instagram Reel", status: "queued", scheduled: "10:00", retries: 0 },
+                    { ep: "S01E01", platform: "YouTube Short", status: "success", scheduled: "09:00", retries: 0 },
+                    { ep: "S01E04", platform: "Instagram Reel", status: "failed", scheduled: "10:30", retries: 2 },
+                  ].map((q, i) => (
+                    <tr key={i} className="hover:bg-slate-800/20 transition-colors">
+                      <td className="py-2 pr-4 font-mono text-slate-300">{q.ep}</td>
+                      <td className="py-2 pr-4 text-slate-400">{q.platform}</td>
+                      <td className="py-2 pr-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                          q.status === "success" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                          q.status === "failed" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                          "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                        }`}>{q.status}</span>
+                      </td>
+                      <td className="py-2 pr-4 text-slate-500">{q.scheduled}</td>
+                      <td className="py-2 text-slate-500">{q.retries}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Analytics + Recommendations */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Analytics Snapshots */}
+            <div className="glass-card rounded-2xl p-6">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <span className="text-emerald-400">📊</span> Analytics Snapshots
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { ep: "S01E01", platform: "Instagram", views: 12500, score: 78.4, trend: "+" },
+                  { ep: "S01E01", platform: "YouTube", views: 8200, score: 65.2, trend: "+" },
+                  { ep: "S01E02", platform: "Instagram", views: 9100, score: 52.1, trend: "-" },
+                ].map((a, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold text-sm text-white">{a.ep} · {a.platform}</span>
+                      <span className={`text-xs font-bold ${a.trend === "+" ? "text-emerald-400" : "text-red-400"}`}>
+                        {a.trend} Score: {a.score}
+                      </span>
+                    </div>
+                    <div className="flex gap-4 text-[10px] text-slate-500">
+                      <span>Views: {a.views.toLocaleString()}</span>
+                    </div>
+                    <div className="mt-2 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          a.score >= 70 ? "bg-gradient-to-r from-emerald-500 to-green-400" :
+                          a.score >= 50 ? "bg-gradient-to-r from-yellow-500 to-orange-400" :
+                          "bg-gradient-to-r from-red-500 to-rose-400"
+                        }`}
+                        style={{ width: `${a.score}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CEO Recommendations */}
+            <div className="glass-card rounded-2xl p-6">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <span className="text-pink-400">🎯</span> CEO Recommendations
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { category: "hook", text: "Improve the opening hook within the first 3 seconds.", confidence: 0.90, status: "approved" },
+                  { category: "duration", text: "Reduce episode duration by 10-15 seconds.", confidence: 0.85, status: "pending" },
+                  { category: "pacing", text: "Increase cut frequency — use faster editing rhythm.", confidence: 0.78, status: "pending" },
+                  { category: "character", text: "Introduce a recurring companion character.", confidence: 0.72, status: "rejected" },
+                ].map((r, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-xs font-bold uppercase tracking-wider text-violet-400">{r.category}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        r.status === "approved" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                        r.status === "rejected" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                        "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                      }`}>{r.status}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 mb-2">{r.text}</p>
+                    <div className="text-[10px] text-slate-500">Confidence: {(r.confidence * 100).toFixed(0)}%</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Provider Health Monitor */}
+          <div className="glass-card rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <span className="text-blue-400">🩺</span> Provider Health Monitor
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { provider: "MockInstagramPublisher", platform: "instagram_reel", available: true, latency: 145, success: 99 },
+                { provider: "MockYouTubePublisher", platform: "youtube_short", available: true, latency: 230, success: 98 },
+              ].map((p) => (
+                <div key={p.platform} className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="font-semibold text-sm text-white">{p.provider}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">{p.platform}</div>
+                    </div>
+                    <span className={`h-2.5 w-2.5 rounded-full ${p.available ? "bg-emerald-400 shadow-emerald-400/50 shadow-sm" : "bg-red-400"}`} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    <div className="p-2 rounded-lg bg-slate-800/60">
+                      <div className="text-slate-500">Latency</div>
+                      <div className="text-white font-bold">{p.latency}ms</div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-800/60">
+                      <div className="text-slate-500">Success Rate</div>
+                      <div className="text-emerald-400 font-bold">{p.success}%</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Operations Timeline */}
+          <div className="glass-card rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <span className="text-slate-400">📋</span> Operations Timeline
+            </h3>
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              {[
+                { type: "publish_success", msg: "S01E01 published to Instagram Reel", time: "09:01:23", color: "emerald" },
+                { type: "publish_success", msg: "S01E01 published to YouTube Short", time: "09:01:45", color: "emerald" },
+                { type: "analytics_snapshot_recorded", msg: "Analytics snapshot recorded for S01E01", time: "10:30:00", color: "blue" },
+                { type: "recommendation_generated", msg: "Hook improvement recommendation generated (confidence 90%)", time: "10:30:01", color: "violet" },
+                { type: "ceo_decision", msg: "CEO approved: Improve hook sequence to 2 seconds", time: "11:00:00", color: "pink" },
+                { type: "publish_success", msg: "S01E02 published to YouTube Short", time: "12:00:00", color: "emerald" },
+                { type: "analytics_snapshot_recorded", msg: "Analytics snapshot recorded for S01E02", time: "13:15:00", color: "blue" },
+              ].map((e, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className={`mt-0.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                    e.color === "emerald" ? "bg-emerald-400" :
+                    e.color === "blue" ? "bg-blue-400" :
+                    e.color === "violet" ? "bg-violet-400" :
+                    "bg-pink-400"
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-slate-300">{e.msg}</div>
+                    <div className="text-[10px] text-slate-600 font-mono">{e.type} · {e.time}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
