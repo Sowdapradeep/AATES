@@ -26,14 +26,17 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const [userEmail, setUserEmail] = useState("operator@aates.com");
+  const userEmail = "operator@aates.com";
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
     const auth = localStorage.getItem("authenticated");
     if (!auth) {
       router.push("/login");
     }
+    return () => clearTimeout(timer);
   }, [router]);
 
   const handleLogout = () => {

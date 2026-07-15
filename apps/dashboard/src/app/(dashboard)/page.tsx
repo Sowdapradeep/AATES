@@ -5,18 +5,13 @@ import {
   Server,
   DollarSign,
   Cpu,
-  Database,
   Layers,
-  TrendingUp,
   FileCode,
   Users,
   Compass,
   BookOpen,
-  ClipboardList,
-  Eye,
   GitBranch,
   ShieldCheck,
-  MapPin,
   Flame,
   Clock
 } from "lucide-react";

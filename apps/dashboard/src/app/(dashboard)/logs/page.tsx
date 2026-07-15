@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Terminal, RefreshCw } from "lucide-react";
 
 export default function LogsPage() {
-  const [logs, setLogs] = useState([
+  const [logs] = useState([
     { timestamp: "2026-07-15T17:45:10.102Z", level: "INFO", service: "api", message: "HTTP GET /v1/health completed with status 200", request_id: "req-f02a", correlation_id: "corr-1a2b" },
     { timestamp: "2026-07-15T17:45:12.304Z", level: "INFO", service: "worker", message: "EventBus: Received event UserLoggedIn with payload {'user': 'operator@aates.com'}", request_id: "req-f02b", correlation_id: "corr-1a2c" },
     { timestamp: "2026-07-15T17:45:15.556Z", level: "DEBUG", service: "scheduler", message: "Scheduler: Polled jobs table, found 0 pending tasks.", request_id: "req-f02c", correlation_id: "corr-1a2d" },

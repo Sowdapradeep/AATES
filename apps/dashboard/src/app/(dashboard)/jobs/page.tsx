@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Clock, Play, Plus } from "lucide-react";
+import { Play, Plus } from "lucide-react";
 
 export default function JobsPage() {
-  const [jobs, setJobs] = useState([
+  const [jobs] = useState([
     { id: "job-1", name: "Daily Video Publishing Check", trigger: "cron", expression: "0 9 * * *", status: "Active", last_run: "2026-07-15 09:00:00" },
     { id: "job-2", name: "Universe Story Continuity Scan", trigger: "interval", expression: "300", status: "Active", last_run: "2026-07-15 17:40:00" },
     { id: "job-3", name: "Budget Usage Sweep", trigger: "cron", expression: "*/30 * * * *", status: "Active", last_run: "2026-07-15 17:30:00" }

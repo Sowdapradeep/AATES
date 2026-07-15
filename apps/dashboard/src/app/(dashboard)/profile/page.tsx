@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, Shield, Key } from "lucide-react";
+import { User } from "lucide-react";
 
 export default function ProfilePage() {
   const [profile] = useState({
