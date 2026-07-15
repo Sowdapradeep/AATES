@@ -1,0 +1,20 @@
+genres:
+  comedy:
+    narrative_structure: "Three-act structure with rapid escalation of situational misunderstandings."
+    archetypes: ["The Clever Wit", "The Naive Sidekick", "The Self-Important Authority"]
+  thriller:
+    narrative_structure: "Tight time-bound loops, high pacing, early hook, and delayed reveal cliffhangers."
+    archetypes: ["The Driven Detective", "The Unwitting Witness", "The Shadowy Coordinator"]
+  fantasy:
+    narrative_structure: "Heroic quest path, elaborate world-rule introductions, and symbolic climaxes."
+    archetypes: ["The Prophesied Hero", "The Wise Mentor", "The Corrupted Sovereign"]
+
+tamil_culture:
+  regional_slang:
+    chennai: ["Maja", "Gethu", "Naina", "Kasmaala"]
+    madurai: ["Aatha", "Mamey", "Sema", "Vanga"]
+    kovai: ["Enga", "Kanna", "Vaanga", "Ponga"]
+  cinematic_techniques:
+    camera:
+      climax: "Extreme close-up with slow tracking dynamic moves."
+      establishing: "Wide panoramic slow crane view establishing traditional sets."

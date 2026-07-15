@@ -7,6 +7,7 @@ from core.logging.middleware import LoggingMiddleware
 from apps.api.v1.health import router as health_router
 from apps.api.v1.version import router as version_router
 from apps.api.v1.auth import router as auth_router
+from apps.api.v1.cognitive import router as cognitive_router
 
 # Initialize structured logging engine
 setup_logging()
@@ -46,3 +47,21 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 app.include_router(health_router, tags=["Health"])
 app.include_router(version_router, tags=["Version"])
 app.include_router(auth_router, prefix="/v1/auth", tags=["Auth"])
+app.include_router(cognitive_router, prefix="/v1", tags=["Cognitive"])
+
+# Instantiate and register the Executive Council agents with the runtime registry
+from brain.ceo.agent import CEOAgent
+from brain.director.creative import CreativeDirectorAgent
+from brain.director.production import ProductionDirectorAgent
+from brain.director.technology import TechnologyDirectorAgent
+from brain.director.analytics import AnalyticsDirectorAgent
+from brain.budget.agent import BusinessDirectorAgent
+
+CEOAgent()
+CreativeDirectorAgent()
+ProductionDirectorAgent()
+TechnologyDirectorAgent()
+AnalyticsDirectorAgent()
+BusinessDirectorAgent()
+
+
