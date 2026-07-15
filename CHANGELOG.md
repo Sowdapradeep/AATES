@@ -5,6 +5,21 @@ All notable changes to the AATES project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0-creative] - 2026-07-15
+
+### Added
+- Standardized `AgentBase` abstract framework implementing lifecycle, context injection, and decision logging methods.
+- Executive Council agents classes (CEO, Creative, Production, Technology, Analytics, Business) registered on start with the `RuntimeAgentRegistry`.
+- `MemoryManager` class separating ephemeral Working memory from permanent DB state models and episodic assets registry.
+- `StoryBibleEngine` class managing versioned, auditable Story Bible updates and delta change tracking records.
+- `DecisionEngine` class retrieving explainability logs joined with confidence metrics.
+- Universe, Character, Villain, Organization, Location, and Relationship generator engines updating the Story Bible.
+- Story Arcs, Conflicts, Plot Points, Twists, and Foreshadowing engines.
+- `TamilNarrativeEngine` and dialogue planners injecting regional slang vocabularies based on Knowledge templates.
+- `ContinuityValidator` and `CanonValidator` checking script proposals against Story Bible rules.
+- FastAPI routes mounted under `/v1/` exposing planners, decision explainability, and validation checks.
+- Next.js dashboard extended with Universe Explorer, Characters list, Relationship Graph, Story Arcs, Timeline Beats, and compliance score metrics.
+
 ## [0.1.0-foundation] - 2026-07-15
 
 ### Added
