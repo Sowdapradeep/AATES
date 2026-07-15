@@ -10,6 +10,7 @@ from apps.api.v1.auth import router as auth_router
 from apps.api.v1.cognitive import router as cognitive_router
 from apps.api.v1.creative import router as creative_router
 from apps.api.v1.production import router as production_router
+from apps.api.v1.operations import router as operations_router
 
 # Initialize structured logging engine
 setup_logging()
@@ -52,6 +53,7 @@ app.include_router(auth_router, prefix="/v1/auth", tags=["Auth"])
 app.include_router(cognitive_router, prefix="/v1", tags=["Cognitive"])
 app.include_router(creative_router, prefix="/v1", tags=["Creative"])
 app.include_router(production_router, prefix="/v1", tags=["Production"])
+app.include_router(operations_router, tags=["Operations"])
 
 
 

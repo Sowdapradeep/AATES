@@ -357,3 +357,96 @@ class DecisionConfidence(Base):
     confidence_score: Mapped[float] = mapped_column(Float, nullable=False)
 
     decision = relationship("DecisionLog", back_populates="confidence")
+
+
+# Operations Campaign Management
+class Campaign(Base):
+    __tablename__ = "campaigns"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    universe_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    season: Mapped[int] = mapped_column(Integer, default=1)
+    start_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    end_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    status: Mapped[str] = mapped_column(String(50), default="draft")
+    priority: Mapped[int] = mapped_column(Integer, default=0)
+    platforms: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+
+# Operations Distribution History
+class DistributionHistory(Base):
+    __tablename__ = "distribution_history"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    campaign_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    universe_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    episode_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    platform: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="queued")
+    publish_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    asset_version: Mapped[int] = mapped_column(Integer, default=1)
+    blueprint_version: Mapped[int] = mapped_column(Integer, default=1)
+    workflow_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    retry_count: Mapped[int] = mapped_column(Integer, default=0)
+
+
+# Operations Immutable Analytics Snapshots
+class AnalyticsSnapshot(Base):
+    __tablename__ = "analytics_snapshots"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    episode_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    platform: Mapped[str] = mapped_column(String(100), nullable=False)
+    views: Mapped[int] = mapped_column(Integer, default=0)
+    watch_time: Mapped[float] = mapped_column(Float, default=0.0)
+    likes: Mapped[int] = mapped_column(Integer, default=0)
+    comments: Mapped[int] = mapped_column(Integer, default=0)
+    shares: Mapped[int] = mapped_column(Integer, default=0)
+    follower_growth: Mapped[int] = mapped_column(Integer, default=0)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+# Operations Timeline Audit Trail
+class OperationsTimeline(Base):
+    __tablename__ = "operations_timeline"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    event_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+# Operations Auditable Learning Recommendations
+class Recommendation(Base):
+    __tablename__ = "recommendations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    episode_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    recommendation_text: Mapped[str] = mapped_column(Text, nullable=False)
+    source_metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    expected_impact: Mapped[str] = mapped_column(Text, nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, default=0.8)
+    status: Mapped[str] = mapped_column(String(50), default="pending")
+    ceo_decision_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    applied_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+# Operations Provider Health Monitor
+class ProviderHealth(Base):
+    __tablename__ = "provider_health"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    provider_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    platform: Mapped[str] = mapped_column(String(100), nullable=False)
+    is_available: Mapped[bool] = mapped_column(Boolean, default=True)
+    latency_ms: Mapped[float] = mapped_column(Float, default=0.0)
+    error_rate: Mapped[float] = mapped_column(Float, default=0.0)
+    success_rate: Mapped[float] = mapped_column(Float, default=1.0)
+    last_success_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
