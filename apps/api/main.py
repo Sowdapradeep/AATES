@@ -8,6 +8,7 @@ from apps.api.v1.health import router as health_router
 from apps.api.v1.version import router as version_router
 from apps.api.v1.auth import router as auth_router
 from apps.api.v1.cognitive import router as cognitive_router
+from apps.api.v1.creative import router as creative_router
 
 # Initialize structured logging engine
 setup_logging()
@@ -48,6 +49,8 @@ app.include_router(health_router, tags=["Health"])
 app.include_router(version_router, tags=["Version"])
 app.include_router(auth_router, prefix="/v1/auth", tags=["Auth"])
 app.include_router(cognitive_router, prefix="/v1", tags=["Cognitive"])
+app.include_router(creative_router, prefix="/v1", tags=["Creative"])
+
 
 # Instantiate and register the Executive Council agents with the runtime registry
 from brain.ceo.agent import CEOAgent
