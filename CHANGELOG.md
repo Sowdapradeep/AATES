@@ -5,6 +5,16 @@ All notable changes to the AATES project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1-pacing-versioning] - 2026-07-15
+
+### Added
+- YAML-driven Output Profiles (`knowledge/output_profiles.yaml`) configuring Reels/Shorts aspect ratios, target resolutions, and loudness limits.
+- YAML-driven Production Profiles (`knowledge/production_profiles.yaml`) configuring cinematic/thriller camera panning settings and shot frequencies.
+- `SceneTimingEngine` calculating scaled scene durations within maximum target runtime limits.
+- `MediaVersioningTracker` executing incremental version cloning and parent-child iteration tracking.
+- `ProductionWorkflowRecovery` implementing checkpoint caching to prevent duplicate asset generation.
+- Render manifest compiled specifications supporting dynamic 9:16 aspect ratio variables.
+
 ## [0.3.0-production] - 2026-07-15
 
 ### Added
