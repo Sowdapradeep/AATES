@@ -5,6 +5,23 @@ All notable changes to the AATES project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0-production] - 2026-07-15
+
+### Added
+- Standardized `StoryboardPanel`, `ShotPlan`, `CameraInstruction`, `CinematographySpec`, and `EnvironmentSpec` DTOs.
+- Storyboard Engine, Shot Planner, Camera Director, Cinematography Engine, and Environment Planner classes.
+- Provider-independent interfaces and mock adapters for Image, Video, Voice, Music, and Rendering (FFmpeg) engines.
+- Parent-child self-referential asset lineage, checksum, and workflow ID columns added to the database `Asset` schema.
+- Image Engine with character consistency seed-profile locks mapping.
+- Dialogue voice synthesis, thematic music soundtrack, and library SFX audio generators.
+- Subtitle Engine generating Tamil SRT timing files.
+- `AutomatedQAEngine` running Quality Gates check loops (Visual, consistency, audio speed ratios, subtitle syntax, and profanity safety lists).
+- `RenderManifestCompiler` compiling Scene Packages timelines and metadata configurations.
+- `FFmpegRenderingEngine` compiling scene audio-video tracks and merging them into the final compiled Master Reel.
+- FastAPI routes mounted under `/v1/production` exposing storyboard generators, TTS synthesizers, QA checkers, manifest compiling, and rendering.
+- Next.js Dashboard extended with **Standardized Production Studio Dashboard** rendering queues, provider fees, storyboards, QA logs, manifestations, and lineages.
+- Automated API test suite covering full production workflows passing successfully (16/16 tests).
+
 ## [0.2.1-blueprint] - 2026-07-15
 
 ### Added
