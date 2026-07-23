@@ -51,12 +51,16 @@ async def main() -> None:
             db = SessionLocal()
             try:
                 if master_universe_id:
+                    # Enforce 60 episodes per season cap rule
+                    season_num = ((cycle_count - 1) // 60) + 1
+                    episode_num = ((cycle_count - 1) % 60) + 1
+
                     rev_engine = RevenueGenerationEngine(db)
                     result = await rev_engine.execute_autonomous_production_cycle(
                         universe_id=master_universe_id,
-                        season=1,
-                        episode=cycle_count,
-                        objective_prompt=f"Autonomous daily Tamil episode release #{cycle_count}"
+                        season=season_num,
+                        episode=episode_num,
+                        objective_prompt=f"Autonomous daily Tamil episode release (Season {season_num}, Episode {episode_num})"
                     )
                     logger.info(f"Autonomous Production Cycle #{cycle_count} Result: {result}")
             except Exception as loop_err:
