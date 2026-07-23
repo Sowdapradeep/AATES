@@ -2,15 +2,16 @@ import uuid
 import hashlib
 from typing import Any
 from sqlalchemy.orm import Session
-from core.database.models import Asset, MonthlyCost
-from providers.voice.mock import MockVoiceProvider
-from providers.music.mock import MockMusicProvider
+from core.database.models import Asset
+from providers.registry import provider_registry
+from core.workflow.billing import billing_engine
 
 class VoiceEngine:
     """Core Voice Engine generating synchronized text-to-speech audio segments."""
     
     def __init__(self, provider: Any = None):
-        self.provider = provider or MockVoiceProvider()
+        # Resolve via registry using capability selection
+        self.provider = provider or provider_registry.select_provider("voice", ["voice_cloning", "tamil_support"])
 
     async def generate_voice(
         self,
@@ -28,7 +29,9 @@ class VoiceEngine:
             text=text,
             voice_id=voice_id,
             emotional_tone=emotional_tone,
-            speaking_speed=speaking_speed
+            speaking_speed=speaking_speed,
+            db=db,
+            universe_id=universe_id
         )
 
         e_uuid = uuid.UUID(episode_id) if isinstance(episode_id, str) else episode_id
@@ -56,10 +59,14 @@ class VoiceEngine:
 
         if db:
             db.add(asset)
-            month_str = "2026-07"
-            m_cost = db.query(MonthlyCost).filter(MonthlyCost.month == month_str).first()
-            if m_cost:
-                m_cost.total_spent += res["cost"]
+            # Accumulate cost via billing engine across multiple dimensions
+            billing_engine.record_transaction(
+                db=db,
+                provider_name=res["provider"],
+                cost=res["cost"],
+                episode_id=episode_id,
+                universe_id=universe_id
+            )
             db.flush()
 
         return asset
@@ -68,7 +75,8 @@ class MusicEngine:
     """Core Music Engine generating thematic and ambient background sound tracks."""
     
     def __init__(self, provider: Any = None):
-        self.provider = provider or MockMusicProvider()
+        # Resolve via registry using capability selection
+        self.provider = provider or provider_registry.select_provider("music", ["music_generation"])
 
     async def generate_music(
         self,
@@ -80,7 +88,7 @@ class MusicEngine:
         db: Session = None
     ) -> Asset:
         """Generates scene backtracks and records cost mappings."""
-        res = await self.provider.generate_music(mood=mood, duration=duration)
+        res = await self.provider.generate_music(mood=mood, duration=duration, db=db, universe_id=universe_id)
 
         e_uuid = uuid.UUID(episode_id) if isinstance(episode_id, str) else episode_id
         u_uuid = uuid.UUID(universe_id) if isinstance(universe_id, str) else universe_id
@@ -107,10 +115,14 @@ class MusicEngine:
 
         if db:
             db.add(asset)
-            month_str = "2026-07"
-            m_cost = db.query(MonthlyCost).filter(MonthlyCost.month == month_str).first()
-            if m_cost:
-                m_cost.total_spent += res["cost"]
+            # Accumulate cost via billing engine
+            billing_engine.record_transaction(
+                db=db,
+                provider_name=res["provider"],
+                cost=res["cost"],
+                episode_id=episode_id,
+                universe_id=universe_id
+            )
             db.flush()
 
         return asset
@@ -133,6 +145,7 @@ class SFXEngine:
         e_uuid = uuid.UUID(episode_id) if isinstance(episode_id, str) else episode_id
         u_uuid = uuid.UUID(universe_id) if isinstance(universe_id, str) else universe_id
 
+        cost_val = 0.005
         asset = Asset(
             id=uuid.uuid4(),
             type="sfx",
@@ -150,15 +163,19 @@ class SFXEngine:
             parent_asset_id=None,
             blueprint_version=1,
             checksum=f"sha256-sfx-{sfx_key}",
-            cost=0.005
+            cost=cost_val
         )
 
         if db:
             db.add(asset)
-            month_str = "2026-07"
-            m_cost = db.query(MonthlyCost).filter(MonthlyCost.month == month_str).first()
-            if m_cost:
-                m_cost.total_spent += 0.005
+            # Accumulate cost via billing engine
+            billing_engine.record_transaction(
+                db=db,
+                provider_name="LibrarySFX",
+                cost=cost_val,
+                episode_id=episode_id,
+                universe_id=universe_id
+            )
             db.flush()
 
         return asset

@@ -2,6 +2,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
+
+from core.config.settings import settings
+settings.app.env = "testing"
+
 from core.database.session import Base, get_db
 from apps.api.main import app
 

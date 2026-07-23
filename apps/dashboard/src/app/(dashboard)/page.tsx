@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Server,
   DollarSign,
@@ -15,40 +15,99 @@ import {
   Flame,
   Clock
 } from "lucide-react";
+import { AgentWorkflowGraph } from "@/components/AgentWorkflowGraph";
 
 export default function DashboardHome() {
   const [activeTab, setActiveTab] = useState("overview");
 
-  const [stats] = useState({
+  const [stats, setStats] = useState({
     activeWorkflows: 3,
-    remainingBudget: 120.45,
-    dailySpend: 1.22,
-    tokenUsage: "412K",
-    workersAlive: 2,
-    uptime: "99.98%"
+    remainingBudget: 100.0,
+    dailySpend: 0.0,
+    tokenUsage: "Bedrock Nova Pro",
+    workersAlive: 1,
+    uptime: "99.99%",
+    status: "ACTIVE"
   });
 
-  const activeWorkflowsList = [
-    { id: "wf-101", name: "Story Planning Cycle", universe: "Kadamban", status: "Running", progress: 65 },
-    { id: "wf-102", name: "Storyboard Render Stage 2", universe: "Kadamban", status: "Running", progress: 40 },
-    { id: "wf-103", name: "Audio Track Sync Pipeline", universe: "Ponniyin V2", status: "Suspended", progress: 85 }
-  ];
+  const [universesList, setUniversesList] = useState<any[]>([
+    { id: "univ-101", name: "AATES Studio Master Universe", genre: "Action Drama", themes: ["Heritage", "Justice", "Technology"], rulesCount: 2, locationsCount: 3, organizationsCount: 2 }
+  ]);
+
+  const [charactersList, setCharactersList] = useState<any[]>([
+    { id: "char-01", name: "Kadamban", role: "Protagonist", archetype: "The Heroic Defender", traits: ["resolute", "loyal", "skilled hunter"], motivation: "Protect ancestral forest lands", slang: "Vathalagundu Tamil", type: "hero" },
+    { id: "char-02", name: "Nallasamy", role: "Villain", archetype: "The Greedy Corporate Officer", traits: ["manipulative", "ruthless", "polished speaker"], motivation: "Acquire land for mining", slang: "Chennai Corporate Tamil", type: "villain" }
+  ]);
+
+  const [activeWorkflowsList, setActiveWorkflowsList] = useState<any[]>([
+    { id: "wf-101", name: "Autonomous Episode Production", universe: "AATES Master Universe", status: "Running", progress: 85 },
+    { id: "wf-102", name: "Bedrock Nova Continuity Audit", universe: "AATES Master Universe", status: "Running", progress: 95 },
+    { id: "wf-103", name: "YouTube Shorts Render & Upload", universe: "AATES Master Universe", status: "Running", progress: 90 }
+  ]);
+
+  useEffect(() => {
+    // 1. Fetch Real Finance Health
+    fetch("http://localhost:8000/v1/finance/health")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.allocated_budget_usd) {
+          setStats((prev) => ({
+            ...prev,
+            remainingBudget: roundVal(data.allocated_budget_usd - data.total_spent_usd),
+            dailySpend: roundVal(data.daily_spent_usd),
+            status: data.status
+          }));
+        }
+      })
+      .catch(() => {});
+
+    // 2. Fetch Real Universes
+    fetch("http://localhost:8000/v1/narrative/universes")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.length > 0) {
+          const mapped = data.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            genre: u.genre || "Drama",
+            themes: u.core_themes || ["Heritage", "Justice"],
+            rulesCount: u.world_rules?.length || 2,
+            locationsCount: 3,
+            organizationsCount: 2
+          }));
+          setUniversesList(mapped);
+
+          // Fetch characters for first universe
+          fetch(`http://localhost:8000/v1/narrative/universes/${data[0].id}/characters`)
+            .then((cRes) => cRes.json())
+            .then((cData) => {
+              if (cData && cData.length > 0) {
+                const cMapped = cData.map((c: any) => ({
+                  id: c.id,
+                  name: c.name,
+                  role: c.role || "Character",
+                  archetype: c.archetype || "Key Persona",
+                  traits: c.personality_traits || ["Resolute"],
+                  motivation: c.motivation || "Story objective",
+                  slang: c.slang_preference || "Tamil",
+                  type: c.role === "villain" ? "villain" : "hero"
+                }));
+                setCharactersList(cMapped);
+              }
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const roundVal = (v: number) => Math.round(v * 100) / 100;
 
   const councilMembers = [
     { name: "CEO Agent", role: "Executive Queue Orchestrator", status: "Running", version: "1.0.0", mission: "Maximize production throughput while enforcing quality & budget bounds.", kpi: "98% queue compliance" },
     { name: "Creative Director Agent", role: "Lore Continuity Guardian", status: "Running", version: "1.0.0", mission: "Ensure all narrative output matches local Tamil cultural structures.", kpi: "96% tone alignment" },
     { name: "Production Director Agent", role: "Assets Render Lead", status: "Running", version: "1.0.0", mission: "Verify frame blueprints before media production triggers.", kpi: "0.2% frame error rate" },
     { name: "Business Director Agent", role: "Financial Engine Monitor", status: "Running", version: "1.0.0", mission: "Enforce cost limits and token budget caps.", kpi: "$0.02 average cost" }
-  ];
-
-  const universesList = [
-    { id: "univ-101", name: "Kadamban Chronicles", genre: "Action Drama", themes: ["land rights", "honor", "modernization"], rulesCount: 2, locationsCount: 3, organizationsCount: 2 },
-    { id: "univ-102", name: "Madurai Mafia", genre: "Crime Thriller", themes: ["loyalty", "revenge", "power"], rulesCount: 3, locationsCount: 4, organizationsCount: 3 }
-  ];
-
-  const charactersList = [
-    { id: "char-01", name: "Kadamban", role: "Protagonist", archetype: "The Heroic Defender", traits: ["resolute", "loyal", "skilled hunter"], motivation: "Protect ancestral forest lands", slang: "Vathalagundu Tamil", type: "hero" },
-    { id: "char-02", name: "Nallasamy", role: "Villain", archetype: "The Greedy Corporate Officer", traits: ["manipulative", "ruthless", "polished speaker"], motivation: "Acquire land for lithium mining", slang: "Chennai Corporate Tamil", type: "villain" }
   ];
 
   const relationshipsList = [
@@ -204,8 +263,13 @@ export default function DashboardHome() {
               </div>
             </div>
           </div>
+
+          {/* n8n-Style Agent Node & Edge Execution Graph */}
+          <AgentWorkflowGraph />
         </div>
       )}
+
+
 
       {/* Universes Explorer Tab */}
       {activeTab === "universes" && (
@@ -224,7 +288,7 @@ export default function DashboardHome() {
                   <span className="text-[10px] font-mono text-slate-500">{u.id}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {u.themes.map((t, idx) => (
+                  {u.themes.map((t: string, idx: number) => (
                     <span key={idx} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
                       #{t}
                     </span>
@@ -275,7 +339,7 @@ export default function DashboardHome() {
                   <p className="text-xs text-slate-400"><strong>Motivation:</strong> {char.motivation}</p>
                   <p className="text-xs text-slate-400"><strong>Tamil Slang:</strong> {char.slang}</p>
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {char.traits.map((t, idx) => (
+                    {char.traits.map((t: string, idx: number) => (
                       <span key={idx} className="text-[9px] px-2 py-0.5 bg-slate-800 rounded text-slate-300">
                         {t}
                       </span>

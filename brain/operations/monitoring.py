@@ -5,11 +5,22 @@ from sqlalchemy.orm import Session
 from core.database.models import ProviderHealth, OperationsTimeline
 from providers.publishing.interface import PublishProvider
 from providers.publishing.mock import MockInstagramPublisher, MockYouTubePublisher
+from providers.publishing.youtube import YouTubePublisher
+from providers.publishing.instagram import InstagramPublisher
+from core.config.settings import settings
 
-_ALL_PROVIDERS: list[PublishProvider] = [
-    MockInstagramPublisher(),
-    MockYouTubePublisher(),
-]
+def get_all_providers() -> list[PublishProvider]:
+    providers = []
+    if settings.publishing.youtube_enabled and settings.publishing.youtube_refresh_token:
+        providers.append(YouTubePublisher())
+    else:
+        providers.append(MockYouTubePublisher())
+        
+    if settings.publishing.instagram_enabled and settings.publishing.instagram_access_token:
+        providers.append(InstagramPublisher())
+    else:
+        providers.append(MockInstagramPublisher())
+    return providers
 
 
 class MonitoringEngine:
@@ -18,7 +29,7 @@ class MonitoringEngine:
     async def probe_all_providers(self, db: Session) -> list[dict[str, Any]]:
         """Ping each registered provider and persist health metrics to the database."""
         results = []
-        for provider in _ALL_PROVIDERS:
+        for provider in get_all_providers():
             health = await provider.health_check()
             row = ProviderHealth(
                 id=str(uuid.uuid4()),

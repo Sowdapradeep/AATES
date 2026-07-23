@@ -21,6 +21,7 @@ export default function LoginPage() {
       if (email && password) {
         // Set local indicator
         localStorage.setItem("authenticated", "true");
+        localStorage.setItem("aates_token", "mock_token_value_for_local_dev");
         router.push("/");
       } else {
         setError("Please enter both email and password.");

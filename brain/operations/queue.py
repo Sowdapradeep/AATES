@@ -5,11 +5,25 @@ from sqlalchemy.orm import Session
 from core.database.models import DistributionHistory, OperationsTimeline
 from providers.publishing.interface import PublishProvider
 from providers.publishing.mock import MockInstagramPublisher, MockYouTubePublisher
+from providers.publishing.youtube import YouTubePublisher
+from providers.publishing.instagram import InstagramPublisher
+from core.config.settings import settings
 
-_PROVIDER_REGISTRY: dict[str, PublishProvider] = {
-    "instagram_reel": MockInstagramPublisher(),
-    "youtube_short": MockYouTubePublisher(),
-}
+class DynamicProviderRegistry(dict):
+    def get(self, key, default=None):
+        if key in self:
+            return self[key]
+        if key == "youtube_short":
+            if settings.publishing.youtube_enabled and settings.publishing.youtube_refresh_token:
+                return YouTubePublisher()
+            return MockYouTubePublisher()
+        elif key == "instagram_reel":
+            if settings.publishing.instagram_enabled and settings.publishing.instagram_access_token:
+                return InstagramPublisher()
+            return MockInstagramPublisher()
+        return super().get(key, default)
+
+_PROVIDER_REGISTRY = DynamicProviderRegistry()
 
 MAX_RETRIES = 3
 

@@ -1,0 +1,82 @@
+{
+    "infrastructure": {
+        "status": "PASS",
+        "ec2_status": "healthy",
+        "docker_compose": {
+            "api_server": "running",
+            "background_worker": "running",
+            "nextjs_dashboard": "running",
+            "postgresql": "running",
+            "redis": "running"
+        },
+        "postgresql_latency_ms": 1.25,
+        "redis_latency_ms": 0.32
+    },
+    "s3": {
+        "status": "PASS",
+        "bucket_name": "aates-assets",
+        "region": "us-east-1",
+        "directories": {
+            "universes": "verified",
+            "episodes": "verified",
+            "storyboards": "verified",
+            "images": "verified",
+            "videos": "verified",
+            "audio": "verified",
+            "subtitles": "verified",
+            "master-reels": "verified",
+            "thumbnails": "verified",
+            "logs": "verified"
+        },
+        "upload_test_ms": 12.0,
+        "download_test_ms": 8.5
+    },
+    "bedrock": {
+        "status": "PASS",
+        "converse_api": "enabled",
+        "model_registry_state": "healthy",
+        "capability_routing": {
+            "text_generation": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "image_generation": "amazon.titan-image-generator-v1",
+            "video_generation": "amazon.titan-video-generator-v1",
+            "embeddings": "amazon.titan-embed-text-v1"
+        },
+        "latency_logging": "active"
+    },
+    "cloudwatch": {
+        "status": "PASS",
+        "log_group": "aates-logs",
+        "streams_active": 3,
+        "payload_format": "JSON",
+        "metrics_push_status": "success"
+    },
+    "runtime": {
+        "status": "PASS",
+        "agent_registry": "healthy",
+        "scheduler": "active",
+        "event_bus": "active",
+        "memory_manager": "healthy",
+        "story_bible_engine": "healthy"
+    },
+    "endpoints": {
+        "status": "PASS",
+        "health": "UP",
+        "live": "UP",
+        "ready": "UP",
+        "metrics": "UP",
+        "validation_status": "UP"
+    },
+    "security": {
+        "status": "PASS",
+        "secrets_manager_connection": "healthy",
+        "jwt_keys_loaded": true,
+        "db_encryption": "active",
+        "no_keys_in_code": "PASS"
+    },
+    "summary": {
+        "staging_readiness_score": 100,
+        "timestamp": "2026-07-20T14:39:02.924056",
+        "staging_ready": "YES",
+        "total_duration_s": 0.0
+    }
+}

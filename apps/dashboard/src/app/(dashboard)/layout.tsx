@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard,
+  GitBranch,
   Map,
   Activity,
   Terminal,
@@ -15,7 +16,21 @@ import {
   Share2,
   LogOut,
   Shield,
-  Loader2
+  Loader2,
+  Search,
+  FileText,
+  Camera,
+  Mic,
+  Type,
+  Music,
+  Image as ImageIcon,
+  ShieldCheck,
+  Brain,
+  Zap,
+  Compass,
+  BookOpen,
+  DollarSign,
+  TrendingUp
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -25,28 +40,28 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const userEmail = "operator@aates.com";
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMounted(true);
-    }, 0);
-    const auth = localStorage.getItem("authenticated");
-    if (!auth) {
+    const savedToken = localStorage.getItem("aates_token");
+    if (!savedToken) {
       router.push("/login");
+    } else {
+      setToken(savedToken);
     }
-    return () => clearTimeout(timer);
+    setLoading(false);
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("authenticated");
+    localStorage.removeItem("aates_token");
     router.push("/login");
   };
 
-  if (!mounted) {
+  if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030307]">
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
         <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
       </div>
     );
@@ -54,7 +69,25 @@ export default function DashboardLayout({
 
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Live Creation Pipeline", href: "/n8n-graph", icon: GitBranch },
+    { name: "AI Research", href: "/research", icon: Search },
+    { name: "AI Scripts", href: "/scripts", icon: FileText },
+    { name: "AI Images", href: "/images", icon: Camera },
+    { name: "AI Voices", href: "/voices", icon: Mic },
+    { name: "AI Videos", href: "/videos", icon: Film },
+    { name: "AI Subtitles", href: "/subtitles", icon: Type },
+    { name: "AI Music", href: "/music", icon: Music },
+    { name: "AI Thumbnails", href: "/thumbnails", icon: ImageIcon },
+    { name: "AI Quality", href: "/quality", icon: ShieldCheck },
+    { name: "Instagram Publish", href: "/publishing/instagram", icon: Share2 },
+    { name: "AI Learning", href: "/learning", icon: Brain },
+    { name: "AI Automation", href: "/automation", icon: Zap },
+    { name: "Narrative Intelligence", href: "/narrative", icon: BookOpen },
+    { name: "Financial Governor", href: "/finance", icon: DollarSign },
+    { name: "Revenue Engine", href: "/revenue", icon: TrendingUp },
+    { name: "Orchestrator", href: "/orchestration", icon: Compass },
     { name: "System Map", href: "/system-map", icon: Map },
+    { name: "Validation", href: "/validation", icon: Shield },
     { name: "Scheduler Jobs", href: "/jobs", icon: Activity },
     { name: "System Logs", href: "/logs", icon: Terminal },
     { name: "Settings", href: "/settings", icon: Settings },
@@ -70,8 +103,8 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen text-slate-100">
       {/* Sidebar */}
-      <aside className="glass-panel sticky top-0 h-screen w-64 flex-shrink-0 border-r border-slate-800/60 p-4">
-        <div className="mb-8 flex items-center gap-3 px-2">
+      <aside className="glass-panel sticky top-0 h-screen w-64 flex-shrink-0 border-r border-slate-800/60 p-4 flex flex-col">
+        <div className="mb-6 flex items-center gap-3 px-2 flex-shrink-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-pink-500 shadow-md">
             <Shield className="h-5 w-5 text-white" />
           </div>
@@ -85,7 +118,8 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <div className="space-y-6">
+        {/* Scrollable Navigation links list */}
+        <div className="flex-1 overflow-y-auto space-y-6 pr-1 mb-4 scrollbar-thin scrollbar-thumb-slate-800">
           <div>
             <span className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
               Platform
@@ -139,7 +173,8 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <div className="absolute bottom-4 left-4 right-4 space-y-2">
+        {/* Sidebar Footer */}
+        <div className="pt-4 border-t border-slate-800/60 flex-shrink-0 space-y-2">
           <div className="flex items-center gap-3 px-2 py-2 rounded-xl bg-slate-900/30 border border-slate-800/40">
             <div className="h-8 w-8 rounded-full bg-violet-600/30 border border-violet-500/40 flex items-center justify-center text-xs font-semibold text-violet-300 uppercase">
               OP

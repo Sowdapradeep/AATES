@@ -2,9 +2,9 @@ import uuid
 import hashlib
 from typing import Any
 from sqlalchemy.orm import Session
-from core.database.models import Asset, MonthlyCost
-from providers.image.mock import MockImageProvider
-from providers.video.mock import MockVideoProvider
+from core.database.models import Asset
+from providers.registry import provider_registry
+from core.workflow.billing import billing_engine
 
 class CharacterConsistencyEngine:
     """Core Character Consistency Engine mapping consistent seeds and visual traits tags."""
@@ -25,7 +25,8 @@ class ImageEngine:
     """Core Image Engine generating storyboard frame assets with consistency constraints."""
     
     def __init__(self, provider: Any = None):
-        self.provider = provider or MockImageProvider()
+        # Resolve via registry using capability selection
+        self.provider = provider or provider_registry.select_provider("image", ["image_generation"])
         self.consistency_engine = CharacterConsistencyEngine()
 
     async def generate_reference_frame(
@@ -45,7 +46,7 @@ class ImageEngine:
             seed_to_use = profile["seed"]
             prompt = f"{prompt}, face profile: {profile['face_anchor']}, hair: {profile['hair_style']}"
 
-        res = await self.provider.generate_image(prompt=prompt, seed=seed_to_use)
+        res = await self.provider.generate_image(prompt=prompt, seed=seed_to_use, db=db, universe_id=universe_id)
 
         # Convert IDs safely
         e_uuid = uuid.UUID(episode_id) if isinstance(episode_id, str) else episode_id
@@ -74,14 +75,14 @@ class ImageEngine:
 
         if db:
             db.add(asset)
-            # Update monthly cost calculations
-            month_str = "2026-07"
-            m_cost = db.query(MonthlyCost).filter(MonthlyCost.month == month_str).first()
-            if not m_cost:
-                m_cost = MonthlyCost(month=month_str, total_spent=res["cost"])
-                db.add(m_cost)
-            else:
-                m_cost.total_spent += res["cost"]
+            # Accumulate cost via billing engine across multiple dimensions
+            billing_engine.record_transaction(
+                db=db,
+                provider_name=res["provider"],
+                cost=res["cost"],
+                episode_id=episode_id,
+                universe_id=universe_id
+            )
             db.flush()
 
         return asset
@@ -90,7 +91,8 @@ class VideoEngine:
     """Core Video Engine transforming reference frames into motion video files."""
     
     def __init__(self, provider: Any = None):
-        self.provider = provider or MockVideoProvider()
+        # Resolve via registry using capability selection
+        self.provider = provider or provider_registry.select_provider("video", ["video_generation"])
 
     async def generate_scene_video(
         self,
@@ -103,7 +105,7 @@ class VideoEngine:
         db: Session = None
     ) -> Asset:
         """Invokes provider video animation generation and registers Asset row."""
-        res = await self.provider.generate_video(image_location=image_location, prompt=prompt)
+        res = await self.provider.generate_video(image_location=image_location, prompt=prompt, db=db, universe_id=universe_id)
 
         e_uuid = uuid.UUID(episode_id) if isinstance(episode_id, str) else episode_id
         u_uuid = uuid.UUID(universe_id) if isinstance(universe_id, str) else universe_id
@@ -131,10 +133,14 @@ class VideoEngine:
 
         if db:
             db.add(asset)
-            month_str = "2026-07"
-            m_cost = db.query(MonthlyCost).filter(MonthlyCost.month == month_str).first()
-            if m_cost:
-                m_cost.total_spent += res["cost"]
+            # Accumulate cost via billing engine
+            billing_engine.record_transaction(
+                db=db,
+                provider_name=res["provider"],
+                cost=res["cost"],
+                episode_id=episode_id,
+                universe_id=universe_id
+            )
             db.flush()
 
         return asset

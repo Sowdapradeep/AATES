@@ -1,0 +1,51 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AATESBedrockLeastPrivilege",
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+                "bedrock:Converse",
+                "bedrock:ConverseStream",
+                "bedrock:ListFoundationModels"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AATESS3BucketAccess",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::aates-assets-345307375520",
+                "arn:aws:s3:::aates-assets-345307375520/*"
+            ]
+        },
+        {
+            "Sid": "AATESSecretsManagerAccess",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret"
+            ],
+            "Resource": "arn:aws:secretsmanager:us-east-1:345307375520:secret:aates-production-secrets-*"
+        },
+        {
+            "Sid": "AATESCloudWatchLogsAccess",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "arn:aws:logs:us-east-1:345307375520:log-group:aates-logs:*"
+        }
+    ]
+}

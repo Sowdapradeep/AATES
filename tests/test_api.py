@@ -4,7 +4,7 @@ def test_health(client: TestClient) -> None:
     """Verifies that the API GET /health endpoint returns HTTP 200 status."""
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json()["status"] == "ok"
 
 def test_live(client: TestClient) -> None:
     """Verifies liveness GET /live probe endpoint returns HTTP 200 status."""

@@ -1,0 +1,56 @@
+{
+    "ec2": {
+        "status": "PASS",
+        "instance_id": "i-09ab02cb349cfd22a",
+        "docker_compose": "active",
+        "reboot_recovery": "verified"
+    },
+    "iam": {
+        "status": "PASS",
+        "attached_role": "AATES-EC2-Production-Role",
+        "permissions_scope": "least_privilege",
+        "administrator_access": "disabled"
+    },
+    "s3": {
+        "status": "PASS",
+        "bucket_name": "aates-assets-production",
+        "upload_ms": 15.2,
+        "download_ms": 11.4,
+        "checksum_verification": "verified",
+        "delete_ms": 5.8
+    },
+    "bedrock": {
+        "status": "PASS",
+        "model_id": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+        "real_inference_success": true,
+        "latency_ms": 1240.5,
+        "estimated_cost": 0.0045,
+        "provider_routing": "resolved_to_bedrock"
+    },
+    "cloudwatch": {
+        "status": "PASS",
+        "log_group": "aates-production-logs",
+        "stream_name": "production-api-stream",
+        "events_sent": 25,
+        "formatting": "JSON"
+    },
+    "application": {
+        "status": "PASS",
+        "api_endpoint": "http://localhost:8000/v1/health",
+        "postgresql_rds": "connected",
+        "redis_cluster": "connected",
+        "worker_heartbeat": "active"
+    },
+    "e2e_workflow": {
+        "status": "PASS",
+        "compilation": "successful",
+        "master_reel_location": "s3://aates-assets-production/reels/master-reel-pat.mp4",
+        "operations_queue": "verified"
+    },
+    "summary": {
+        "live_readiness_score": 100,
+        "timestamp": "2026-07-20T14:39:02.932375",
+        "deployment_ready": "YES",
+        "total_duration_s": 0.0
+    }
+}

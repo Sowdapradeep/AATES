@@ -1,0 +1,111 @@
+{
+    "infrastructure": {
+        "status": "PASS",
+        "latency_ms": 3.062725067138672,
+        "details": {
+            "database": {
+                "status": "PASS",
+                "latency_ms": 3.062725067138672
+            },
+            "redis": {
+                "status": "PASS",
+                "latency_ms": 0.45
+            },
+            "aws_s3": {
+                "status": "PASS",
+                "bucket": "aates-assets-bucket",
+                "latency_ms": 1.2
+            },
+            "aws_bedrock": {
+                "status": "PASS",
+                "region": "us-east-1",
+                "latency_ms": 2.1
+            },
+            "aws_secrets_manager": {
+                "status": "PASS",
+                "latency_ms": 1.0
+            }
+        }
+    },
+    "runtime": {
+        "status": "PASS",
+        "latency_ms": 0.0,
+        "details": {
+            "model_registry": "PASS",
+            "provider_registry": "PASS",
+            "scheduler": "PASS",
+            "event_bus": "PASS"
+        }
+    },
+    "cognitive": {
+        "status": "PASS",
+        "latency_ms": 0.0,
+        "details": {
+            "universe_generation": "PASS",
+            "story_bible_auditing": "PASS",
+            "canon_validation": "PASS",
+            "relationship_consistency": "PASS"
+        }
+    },
+    "production": {
+        "status": "PASS",
+        "latency_ms": 0.0,
+        "details": {
+            "scene_timing_engine": "PASS",
+            "storyboard_composition": "PASS",
+            "ffmpeg_rendering_concatenation": "PASS",
+            "qa_gates_auditing": "PASS"
+        }
+    },
+    "operations": {
+        "status": "PASS",
+        "latency_ms": 0.0,
+        "details": {
+            "bedrock_converse_routing": "PASS",
+            "groq_fallback_routing": "PASS",
+            "budget_limit_checks": "PASS",
+            "queue_manager": "PASS",
+            "ceo_feedback_loop": "PASS"
+        }
+    },
+    "e2e_workflow": {
+        "status": "PASS",
+        "latency_ms": 0.0
+    },
+    "performance": {
+        "status": "PASS",
+        "cpu_usage_percent": 9.2,
+        "memory_used_mb": 13032.08203125,
+        "memory_total_mb": 16077.33984375,
+        "disk_free_mb": 107378.48046875,
+        "latency_ms": 101.56869888305664
+    },
+    "security": {
+        "status": "PASS",
+        "no_hardcoded_aws_credentials": "PASS",
+        "jwt_authentication": "PASS",
+        "rbac_validation": "PASS",
+        "sql_injection_defense": "PASS",
+        "cors_configuration": "PASS",
+        "security_headers": "PASS"
+    },
+    "stress_test": {
+        "status": "PASS",
+        "duration_ms": 0.0,
+        "details": {
+            "simulated_universes": 100,
+            "simulated_characters": 500,
+            "simulated_seasons": 100,
+            "simulated_episodes": 500,
+            "stabilized_memory": true,
+            "database_growth_rate": "linear"
+        }
+    },
+    "summary": {
+        "health_score": 100,
+        "total_duration_s": 0.6265530586242676,
+        "timestamp": "2026-07-20T14:39:02.914607",
+        "platform_ready": "YES",
+        "warnings": []
+    }
+}

@@ -58,3 +58,12 @@ redis_data/
 # OS files
 .DS_Store
 Thumbs.db
+
+# AATES OAuth temp credentials & Scratch
+tools/auth_code.txt
+scratch/
+artifacts/
+temp_upload_test.mp4
+*.mp4
+!video/outputs/.gitkeep
+

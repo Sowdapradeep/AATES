@@ -7,9 +7,52 @@ import redis
 router = APIRouter()
 
 @router.get("/health", status_code=status.HTTP_200_OK)
-def health() -> dict[str, str]:
-    """Basic health check indicating api server is responsive."""
-    return {"status": "ok"}
+async def health() -> dict:
+    """Exposes dynamic health metrics of the core AI models and failover settings."""
+    from providers.registry import provider_registry
+    from core.config.settings import settings
+    
+    # Check Bedrock
+    try:
+        bedrock_prov = provider_registry.get_provider("llm", "BedrockLLM")
+        bedrock_health = await bedrock_prov.health_check()
+    except Exception as e:
+        bedrock_health = {
+            "status": "unhealthy",
+            "error": str(e),
+            "reasoning_model": settings.ai.bedrock_reasoning_model,
+            "fast_model": settings.ai.bedrock_fast_model,
+            "embedding_model": settings.ai.bedrock_embedding_model,
+            "image_model": settings.ai.bedrock_image_model
+        }
+        
+    # Check Gemini
+    try:
+        gemini_prov = provider_registry.get_provider("llm", "Gemini")
+        gemini_health = await gemini_prov.health_check()
+    except Exception as e:
+        gemini_health = {"status": "unhealthy", "error": str(e)}
+        
+    # Check Groq
+    try:
+        groq_prov = provider_registry.get_provider("llm", "Groq")
+        groq_health = await groq_prov.health_check()
+    except Exception as e:
+        groq_health = {"status": "unhealthy", "error": str(e)}
+        
+    return {
+        "status": "ok",
+        "bedrock": bedrock_health,
+        "gemini": {
+            "status": gemini_health.get("status", "unhealthy")
+        },
+        "groq": {
+            "status": groq_health.get("status", "unhealthy")
+        },
+        "primary_provider": settings.ai.provider,
+        "active_provider": settings.ai.provider,
+        "failover_enabled": settings.ai.allow_external_failover
+    }
 
 @router.get("/live", status_code=status.HTTP_200_OK)
 def live() -> dict[str, str]:
