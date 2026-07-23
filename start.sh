@@ -1,3 +1,4 @@
 #!/bin/bash
-sudo docker compose -f deployment/docker/docker-compose.yml up -d --build
-sudo docker compose -f deployment/docker/docker-compose.yml ps
+cd deployment/docker
+sudo docker compose up -d --build || sudo docker-compose up -d --build
+sudo docker compose ps || sudo docker-compose ps
