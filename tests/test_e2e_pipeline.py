@@ -12,8 +12,9 @@ def test_complete_autonomous_production_pipeline(client: TestClient) -> None:
     4. Production Studio: Generate visual layouts, dialog audio, music, QA gating, and render Master Reel.
     5. Operations & Distribution: Enqueue publications, simulate publishing, record analytics, and run CEO loop.
     """
-    universe_id = "00000000-0000-0000-0000-000000000002"
-    episode_id = "00000000-0000-0000-0000-000000000009"
+    import uuid
+    universe_id = str(uuid.uuid4())
+    episode_id = str(uuid.uuid4())
 
     # ==========================================
     # 1. Idea / Planning
