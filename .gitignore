@@ -39,7 +39,7 @@ yarn-error.log*
 .pnp.*
 
 # Database & Cache local data
-storage/
+/storage/
 postgres_data/
 redis_data/
 *.db
