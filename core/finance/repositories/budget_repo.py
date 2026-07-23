@@ -1,4 +1,3 @@
-from trio import _subprocess_platform
 import uuid
 from typing import List, Optional
 from sqlalchemy.orm import Session
