@@ -138,6 +138,17 @@ class YouTubePublisher(PublishProvider):
 
         raise RuntimeError("YouTube API request failed after maximum retries")
 
+    async def publish(
+        self,
+        master_reel_path: str | None = None,
+        video_path: str | None = None,
+        caption: str = "",
+        metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Alias for upload method to satisfy standard provider contract."""
+        target_path = master_reel_path or video_path or ""
+        return await self.upload(master_reel_path=target_path, caption=caption, metadata=metadata or {})
+
     async def upload(
         self,
         master_reel_path: str,

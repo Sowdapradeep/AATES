@@ -255,17 +255,30 @@ class InstagramPublishingProvider(PublishProvider):
             "api_endpoint": f"https://graph.facebook.com/{self.api_version}/17841400000000000/media"
         }
 
-    async def publish(self, container_id: str) -> dict[str, Any]:
-        """Finalize media container publish on Instagram Graph API."""
+    async def publish(
+        self,
+        container_id: str | None = None,
+        master_reel_path: str | None = None,
+        video_path: str | None = None,
+        caption: str = "",
+        metadata: dict[str, Any] | None = None,
+        **kwargs: Any
+    ) -> dict[str, Any]:
+        """Finalize media container publish on Instagram Graph API or handle direct upload parameters."""
+        target_path = master_reel_path or video_path
+        if target_path:
+            return await self.upload(master_reel_path=target_path, caption=caption, metadata=metadata or {})
+        
+        cid = container_id or f"1799{uuid.uuid4().int % 10000000000}"
         media_id = f"1802{uuid.uuid4().int % 10000000000}"
         permalink = f"https://www.instagram.com/reel/{uuid.uuid4().hex[:11]}/"
         
         return {
             "instagram_media_id": media_id,
-            "container_id": container_id,
+            "container_id": cid,
             "permalink": permalink,
             "status": "PUBLISHED",
-            "published_at": "2026-07-20T10:30:00Z"
+            "published_at": "2026-07-23T18:38:00Z"
         }
 
     async def fetch_status(self, container_id: str) -> dict[str, Any]:
