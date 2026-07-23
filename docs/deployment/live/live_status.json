@@ -49,8 +49,8 @@
     },
     "summary": {
         "live_readiness_score": 100,
-        "timestamp": "2026-07-20T14:39:02.932375",
+        "timestamp": "2026-07-23T15:36:43.445554",
         "deployment_ready": "YES",
-        "total_duration_s": 0.0
+        "total_duration_s": 0.0005867481231689453
     }
 }

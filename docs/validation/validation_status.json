@@ -1,11 +1,11 @@
 {
     "infrastructure": {
         "status": "PASS",
-        "latency_ms": 3.062725067138672,
+        "latency_ms": 4.095315933227539,
         "details": {
             "database": {
                 "status": "PASS",
-                "latency_ms": 3.062725067138672
+                "latency_ms": 4.095315933227539
             },
             "redis": {
                 "status": "PASS",
@@ -74,11 +74,11 @@
     },
     "performance": {
         "status": "PASS",
-        "cpu_usage_percent": 9.2,
-        "memory_used_mb": 13032.08203125,
+        "cpu_usage_percent": 6.9,
+        "memory_used_mb": 15703.265625,
         "memory_total_mb": 16077.33984375,
-        "disk_free_mb": 107378.48046875,
-        "latency_ms": 101.56869888305664
+        "disk_free_mb": 102799.94921875,
+        "latency_ms": 103.34086418151855
     },
     "security": {
         "status": "PASS",
@@ -103,8 +103,8 @@
     },
     "summary": {
         "health_score": 100,
-        "total_duration_s": 0.6265530586242676,
-        "timestamp": "2026-07-20T14:39:02.914607",
+        "total_duration_s": 16.089640140533447,
+        "timestamp": "2026-07-23T15:36:43.351809",
         "platform_ready": "YES",
         "warnings": []
     }
