@@ -1,4 +1,5 @@
 #!/bin/bash
-cd deployment/docker
-sudo docker compose up -d --build || sudo docker-compose up -d --build
-sudo docker compose ps || sudo docker-compose ps
+cd "$(dirname "$0")/deployment/docker" || exit 1
+sudo docker compose up -d --build
+echo "--- Live Container Status ---"
+sudo docker compose ps
