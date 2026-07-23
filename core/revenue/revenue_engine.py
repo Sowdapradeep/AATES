@@ -165,31 +165,35 @@ class RevenueGenerationEngine:
         yt_publisher = publishing_registry.get_provider("youtube")
         ig_publisher = publishing_registry.get_provider("instagram")
 
+        meta = {
+            "title": title,
+            "description": f"{campaign.viral_hook}\n\n{' '.join(campaign.hashtags)}",
+            "tags": campaign.hashtags
+        }
+
         if yt_publisher:
             try:
                 yt_res = await yt_publisher.publish(
-                    video_path=video_path,
-                    title=title,
-                    description=f"{campaign.viral_hook}\n\n{' '.join(campaign.hashtags)}",
-                    tags=campaign.hashtags
+                    master_reel_path=video_path,
+                    caption=f"{campaign.viral_hook}\n\n{' '.join(campaign.hashtags)}",
+                    metadata=meta
                 )
                 publishing_results["youtube_shorts"] = yt_res
             except Exception as e:
                 logger.warning(f"YouTube publishing error: {e}")
-                publishing_results["youtube_shorts"] = {"status": "simulation_success", "platform": "youtube_shorts"}
+                publishing_results["youtube_shorts"] = {"status": "simulation_success", "platform": "youtube_shorts", "detail": str(e)}
 
         if ig_publisher:
             try:
                 ig_res = await ig_publisher.publish(
-                    video_path=video_path,
-                    title=title,
-                    description=f"{campaign.viral_hook}\n\n{' '.join(campaign.hashtags)}",
-                    tags=campaign.hashtags
+                    master_reel_path=video_path,
+                    caption=f"{campaign.viral_hook}\n\n{' '.join(campaign.hashtags)}",
+                    metadata=meta
                 )
                 publishing_results["instagram_reels"] = ig_res
             except Exception as e:
                 logger.warning(f"Instagram publishing error: {e}")
-                publishing_results["instagram_reels"] = {"status": "simulation_success", "platform": "instagram_reels"}
+                publishing_results["instagram_reels"] = {"status": "simulation_success", "platform": "instagram_reels", "detail": str(e)}
 
         LIVE_PIPELINE_STATE["nodes_status"]["node-6"] = "completed"
 
