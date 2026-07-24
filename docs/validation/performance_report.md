@@ -1,6 +1,6 @@
 # AATES Performance Diagnostics & Resource Utilization Report
 
-* CPU Usage: **17.0%**
-* Memory Load: **14965.1 MB / 16077.3 MB**
-* Disk Buffer Free: **102589.3 MB**
+* CPU Usage: **14.9%**
+* Memory Load: **14056.8 MB / 16077.3 MB**
+* Disk Buffer Free: **102306.7 MB**
 * Performance Diagnostic: **HEALTHY**

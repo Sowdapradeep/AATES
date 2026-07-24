@@ -75,8 +75,8 @@
     },
     "summary": {
         "staging_readiness_score": 100,
-        "timestamp": "2026-07-23T16:32:24.082589",
+        "timestamp": "2026-07-23T18:40:48.071144",
         "staging_ready": "YES",
-        "total_duration_s": 0.0006051063537597656
+        "total_duration_s": 0.0005266666412353516
     }
 }
