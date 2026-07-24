@@ -62,6 +62,11 @@ class RevenueGenerationEngine:
         Verifies if an episode Short/Reel has already been published today (UTC).
         Enforces max 1 Short/Reel per day.
         """
+        import os
+        if os.getenv("BYPASS_DAILY_LIMIT", "false").lower() == "true":
+            logger.info("Bypassing daily publishing limit check (BYPASS_DAILY_LIMIT=true)")
+            return False
+
         today = datetime.datetime.now(datetime.timezone.utc).date()
         recent_campaigns = self.db.query(MarketingCampaign).all()
         for camp in recent_campaigns:
