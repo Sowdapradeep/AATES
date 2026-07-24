@@ -96,8 +96,16 @@ def fetch_and_apply_secrets() -> None:
                 settings.ai.bedrock_model_mappings = payload["bedrock_model_mappings"]
             if "db_url" in payload:
                 settings.db.url = payload["db_url"]
+            elif "DATABASE_URL" in payload:
+                settings.db.url = payload["DATABASE_URL"]
             if "jwt_secret" in payload:
                 settings.security.secret_key = payload["jwt_secret"]
+            elif "JWT_SECRET" in payload:
+                settings.security.secret_key = payload["JWT_SECRET"]
+            if "s3_bucket" in payload:
+                settings.aws.s3_bucket = payload["s3_bucket"]
+            elif "S3_BUCKET" in payload:
+                settings.aws.s3_bucket = payload["S3_BUCKET"]
             if "cloudwatch_logs_enabled" in payload:
                 settings.aws.cloudwatch_logs_enabled = payload["cloudwatch_logs_enabled"]
             if "cloudwatch_log_group" in payload:
