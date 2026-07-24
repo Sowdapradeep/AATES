@@ -40,6 +40,7 @@ services:
       - APP__ENV=production
       - DB__URL=postgresql://postgres:postgres@postgres:5432/aates
       - REDIS__URL=redis://redis:6379/0
+      - PYTHONPATH=/app
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,6 +56,7 @@ services:
       - APP__ENV=production
       - DB__URL=postgresql://postgres:postgres@postgres:5432/aates
       - REDIS__URL=redis://redis:6379/0
+      - PYTHONPATH=/app
     depends_on:
       postgres:
         condition: service_healthy
