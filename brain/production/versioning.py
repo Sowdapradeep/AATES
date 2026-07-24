@@ -37,7 +37,7 @@ class MediaVersioningTracker:
             workflow_id=original_asset.workflow_id,
             checksum=new_checksum,
             cost=cost,
-            created_at=datetime.datetime.utcnow()
+            created_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         )
         
         db.add(new_asset)

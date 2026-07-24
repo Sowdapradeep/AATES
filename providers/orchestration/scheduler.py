@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
@@ -9,7 +9,7 @@ class ResourceReservation(BaseModel):
     reservation_id: str
     resource_type: str  # GPU, WORKER_SLOT, API_QUOTA, PUBLISHING_WINDOW
     allocated_to_node: str
-    granted_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    granted_at: str = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None).isoformat())
     status: str = "ACTIVE"
 
 class SchedulingEngine:

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -66,7 +66,7 @@ async def get_research_metrics(db: Session = Depends(get_db)):
 
     uptime = "offline"
     if AGENT_STATE["is_running"] and AGENT_STATE["started_at"]:
-        uptime = str(datetime.utcnow() - AGENT_STATE["started_at"])
+        uptime = str(datetime.now(UTC).replace(tzinfo=None) - AGENT_STATE["started_at"])
 
     # Query heartbeats matching research agents
     heartbeats = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id.like("research-agent-%")).all()
@@ -74,7 +74,7 @@ async def get_research_metrics(db: Session = Depends(get_db)):
         {
             "worker_id": hb.worker_id,
             "last_heartbeat_at": hb.last_heartbeat_at.isoformat() if hb.last_heartbeat_at else None,
-            "is_alive": (datetime.utcnow() - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
+            "is_alive": (datetime.now(UTC).replace(tzinfo=None) - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
         } for hb in heartbeats
     ]
 

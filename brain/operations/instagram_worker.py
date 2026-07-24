@@ -73,10 +73,10 @@ def update_worker_heartbeat(db: Session, worker_id: str) -> None:
     try:
         hb = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id == worker_id).first()
         if not hb:
-            hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.datetime.utcnow())
+            hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
             db.add(hb)
         else:
-            hb.last_heartbeat_at = datetime.datetime.utcnow()
+            hb.last_heartbeat_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -93,7 +93,7 @@ def recover_orphaned_jobs(db: Session) -> None:
             job.attempts += 1
             if job.attempts >= job.max_attempts:
                 job.status = "FAILED"
-                job.failed_at = datetime.datetime.utcnow()
+                job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                 job.error_code = "ORPHANED_LIMIT"
                 job.error_message = "Job orphaned repeatedly and exceeded max attempts."
         db.commit()
@@ -248,7 +248,7 @@ async def process_instagram_job(db: Session, job: InstagramPublishJob) -> None:
             "permalink": pub_res["permalink"],
             "publishing_lifecycle_state": "Published",
             "validation_status": "PASSED",
-            "created_at": datetime.datetime.utcnow().isoformat()
+            "created_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
         }
 
         # Create PublicationPackage
@@ -284,7 +284,7 @@ async def process_instagram_job(db: Session, job: InstagramPublishJob) -> None:
             caption=caption_info["caption"],
             hashtags=caption_info["hashtags"],
             alt_text=caption_info["alt_text"],
-            published_at=datetime.datetime.utcnow(),
+            published_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None),
             visibility="PUBLIC",
             publishing_result=pub_res
         )
@@ -310,7 +310,7 @@ async def process_instagram_job(db: Session, job: InstagramPublishJob) -> None:
         snapshot = InstagramInsightSnapshot(
             id=uuid.uuid4(),
             publication_id=publication.id,
-            captured_at=datetime.datetime.utcnow(),
+            captured_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None),
             views=insight_data["views"],
             reach=insight_data["reach"],
             impressions=insight_data["impressions"],
@@ -351,7 +351,7 @@ async def process_instagram_job(db: Session, job: InstagramPublishJob) -> None:
             job.status = "SUCCESS"
             job.stage = "COMPLETED"
             job.progress = STAGES["COMPLETED"]
-            job.completed_at = datetime.datetime.utcnow()
+            job.completed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             job.duration_sec = total_duration
             db.add(job)
             db.commit()
@@ -404,14 +404,14 @@ async def process_instagram_job(db: Session, job: InstagramPublishJob) -> None:
         if is_transient_error(error_msg) and job.attempts < job.max_attempts:
             delay = get_backoff_delay(job.attempts)
             job.status = "RETRYING"
-            job.scheduled_at = datetime.datetime.utcnow() + datetime.timedelta(seconds=delay)
+            job.scheduled_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None) + datetime.timedelta(seconds=delay)
             job.error_code = "TRANSIENT_ERROR"
             job.error_message = error_msg
         else:
             job.status = "FAILED"
             job.stage = "FAILED"
             job.progress = STAGES["FAILED"]
-            job.failed_at = datetime.datetime.utcnow()
+            job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             job.error_code = "PERMANENT_ERROR"
             job.error_message = error_msg
 
@@ -429,7 +429,7 @@ async def instagram_worker_poll_loop(worker_id: str) -> None:
 
             query = db.query(InstagramPublishJob).filter(
                 InstagramPublishJob.status.in_(["QUEUED", "RETRYING"]),
-                (InstagramPublishJob.scheduled_at == None) | (InstagramPublishJob.scheduled_at <= datetime.datetime.utcnow())
+                (InstagramPublishJob.scheduled_at == None) | (InstagramPublishJob.scheduled_at <= datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
             ).order_by(
                 InstagramPublishJob.priority.desc(),
                 InstagramPublishJob.created_at.asc()
@@ -443,7 +443,7 @@ async def instagram_worker_poll_loop(worker_id: str) -> None:
             if job:
                 if is_valid_transition(job.status, "PROCESSING"):
                     job.status = "PROCESSING"
-                    job.started_at = datetime.datetime.utcnow()
+                    job.started_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                     db.commit()
 
                     await process_instagram_job(db, job)
@@ -461,7 +461,7 @@ async def start_instagram_worker(concurrency: int = 1) -> None:
     if AGENT_STATE["is_running"]:
         return
     AGENT_STATE["is_running"] = True
-    AGENT_STATE["started_at"] = datetime.datetime.utcnow()
+    AGENT_STATE["started_at"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
     db = SessionLocal()
     try:

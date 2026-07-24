@@ -41,7 +41,7 @@ class LifelongMemoryStore:
             self._memory[category] = []
         self._memory[category].append({
             **entry,
-            "stored_at": datetime.datetime.utcnow().isoformat(),
+            "stored_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         })
         self._total_stored += 1
 

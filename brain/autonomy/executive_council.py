@@ -127,7 +127,7 @@ class AutonomousExecutiveCouncil:
             "cost_usd": cost_usd,
             "retention_pct": retention_pct,
             "recommendations_submitted": submitted_recommendations,
-            "reviewed_at": datetime.datetime.utcnow().isoformat(),
+            "reviewed_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         }
         self.review_log.append(review_entry)
 

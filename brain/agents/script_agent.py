@@ -61,10 +61,10 @@ def update_agent_heartbeat(db: Session, agent_id: str) -> None:
     try:
         hb = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id == agent_id).first()
         if not hb:
-            hb = WorkerHeartbeat(worker_id=agent_id, last_heartbeat_at=datetime.datetime.utcnow())
+            hb = WorkerHeartbeat(worker_id=agent_id, last_heartbeat_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
             db.add(hb)
         else:
-            hb.last_heartbeat_at = datetime.datetime.utcnow()
+            hb.last_heartbeat_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -82,7 +82,7 @@ def recover_orphaned_jobs(db: Session) -> None:
             job.attempts += 1
             if job.attempts >= job.max_attempts:
                 job.status = "FAILED"
-                job.failed_at = datetime.datetime.utcnow()
+                job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                 job.error_code = "ORPHANED_LIMIT"
                 job.error_message = "Job orphaned repeatedly and exceeded max attempts."
         db.commit()
@@ -303,7 +303,7 @@ async def process_script_job(db: Session, job: ScriptJob) -> None:
             job.status = "SUCCESS"
             job.stage = "COMPLETED"
             job.progress = STAGES["COMPLETED"]
-            job.completed_at = datetime.datetime.utcnow()
+            job.completed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             job.duration_sec = total_duration
             db.add(job)
             db.commit()
@@ -338,7 +338,7 @@ async def process_script_job(db: Session, job: ScriptJob) -> None:
             delay = get_backoff_delay(job.attempts)
             if is_valid_transition(job.status, "RETRYING"):
                 job.status = "RETRYING"
-                job.scheduled_at = datetime.datetime.utcnow() + datetime.timedelta(seconds=delay)
+                job.scheduled_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None) + datetime.timedelta(seconds=delay)
                 job.error_code = "TRANSIENT_ERROR"
                 job.error_message = error_msg
                 db.add(job)
@@ -349,7 +349,7 @@ async def process_script_job(db: Session, job: ScriptJob) -> None:
                 job.status = "FAILED"
                 job.stage = "FAILED"
                 job.progress = STAGES["FAILED"]
-                job.failed_at = datetime.datetime.utcnow()
+                job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                 job.error_code = "PERMANENT_ERROR"
                 job.error_message = error_msg
                 db.add(job)
@@ -368,7 +368,7 @@ async def script_agent_poll_loop(agent_id: str) -> None:
             # Query queued script jobs
             query = db.query(ScriptJob).filter(
                 ScriptJob.status.in_(["QUEUED", "RETRYING"]),
-                (ScriptJob.scheduled_at == None) | (ScriptJob.scheduled_at <= datetime.datetime.utcnow())
+                (ScriptJob.scheduled_at == None) | (ScriptJob.scheduled_at <= datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
             ).order_by(
                 ScriptJob.priority.desc(),
                 ScriptJob.created_at.asc()
@@ -384,7 +384,7 @@ async def script_agent_poll_loop(agent_id: str) -> None:
                 # Transition to PROCESSING
                 if is_valid_transition(job.status, "PROCESSING"):
                     job.status = "PROCESSING"
-                    job.started_at = datetime.datetime.utcnow()
+                    job.started_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                     db.commit()
 
                     # Run processing
@@ -404,7 +404,7 @@ async def start_script_agent(concurrency: int = 1) -> None:
     if AGENT_STATE["is_running"]:
         return
     AGENT_STATE["is_running"] = True
-    AGENT_STATE["started_at"] = datetime.datetime.utcnow()
+    AGENT_STATE["started_at"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
     # Reset hung jobs
     db = SessionLocal()

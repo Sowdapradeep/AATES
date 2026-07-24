@@ -25,7 +25,7 @@ class PromptVersionRecord:
         self.latencies_ms: list[float] = []
         self.audience_scores: list[float] = []
         self.status = "active"  # active | promoted | retired
-        self.created_at = datetime.datetime.utcnow().isoformat()
+        self.created_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
 
     @property
     def avg_score(self) -> float:

@@ -3,7 +3,7 @@ import sys
 import time
 import json
 import psutil
-from datetime import datetime
+from datetime import UTC, datetime
 
 # Add root folder to pythonpath
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -105,7 +105,7 @@ def run_staging_checks() -> dict:
 
     results["summary"] = {
         "staging_readiness_score": health_score,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).replace(tzinfo=None).isoformat(),
         "staging_ready": "YES" if health_score >= 90 else "NO",
         "total_duration_s": time.time() - start_time
     }

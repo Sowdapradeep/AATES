@@ -1,6 +1,6 @@
 import math
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict
 
@@ -104,7 +104,7 @@ class FeatureVector(BaseModel):
     item_id: str
     quality_package_id: str
     publication_id: Optional[str] = None
-    extracted_at: str = datetime.utcnow().isoformat()
+    extracted_at: str = datetime.now(UTC).replace(tzinfo=None).isoformat()
     script: ScriptFeatures = ScriptFeatures()
     thumbnail: ThumbnailFeatures = ThumbnailFeatures()
     audio: AudioFeatures = AudioFeatures()
@@ -174,8 +174,8 @@ class FeatureStore:
         pub_feat = PublishingFeatures(
             platform=getattr(pub_record, "platform_name", "instagram") if pub_record else "instagram",
             media_type="Reels",
-            day_of_week=datetime.utcnow().weekday(),
-            hour_of_day=datetime.utcnow().hour,
+            day_of_week=datetime.now(UTC).replace(tzinfo=None).weekday(),
+            hour_of_day=datetime.now(UTC).replace(tzinfo=None).hour,
             caption_length=len(getattr(pub_record, "caption", "")) if pub_record else 150,
             hashtag_count=len(getattr(pub_record, "hashtags", [])) if pub_record and getattr(pub_record, "hashtags") else 5
         )

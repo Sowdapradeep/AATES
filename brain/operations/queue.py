@@ -99,7 +99,7 @@ class PublishingQueueManager:
             try:
                 res = await provider.upload(master_reel_path, caption, {"episode_id": episode_id})
                 entry.status = res["status"]
-                entry.publish_time = datetime.datetime.utcnow()
+                entry.publish_time = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                 db.flush()
 
                 # Log to operations timeline
@@ -143,7 +143,7 @@ def _log_timeline_event(db: Session, event_type: str, payload: dict[str, Any]) -
         id=str(uuid.uuid4()),
         event_type=event_type,
         payload=payload,
-        timestamp=datetime.datetime.utcnow()
+        timestamp=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
     ))
     db.flush()
 

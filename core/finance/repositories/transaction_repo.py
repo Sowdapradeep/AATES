@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import List, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -18,7 +18,7 @@ class TransactionRepository(BaseFinanceRepository[CostTransaction]):
         ).all()
 
     def get_daily_spend_usd(self) -> float:
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start = datetime.now(UTC).replace(tzinfo=None).replace(hour=0, minute=0, second=0, microsecond=0)
         res = self.db.query(func.sum(CostTransaction.cost_usd)).filter(
             CostTransaction.created_at >= today_start,
             CostTransaction.is_deleted == False

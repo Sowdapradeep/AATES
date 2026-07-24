@@ -39,7 +39,7 @@ class MonitoringEngine:
                 latency_ms=health["latency_ms"],
                 error_rate=health["error_rate"],
                 success_rate=health["success_rate"],
-                last_success_at=datetime.datetime.utcnow()
+                last_success_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             )
             db.add(row)
             db.flush()
@@ -60,7 +60,7 @@ class MonitoringEngine:
             id=str(uuid.uuid4()),
             event_type="queue_depth_snapshot",
             payload={"queue_depth": depth},
-            timestamp=datetime.datetime.utcnow()
+            timestamp=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         ))
         db.flush()
 

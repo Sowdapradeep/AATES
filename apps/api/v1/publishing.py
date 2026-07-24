@@ -20,7 +20,7 @@ from providers.publishing.instagram import InstagramPublisher
 from contracts.dto.publishing import PublishingJobCreateDTO, PublishingJobResponseDTO
 from brain.operations.queue import _log_timeline_event
 from brain.operations.publishing_worker import is_valid_transition
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger("aros.publishing.api")
 
@@ -557,7 +557,7 @@ async def get_worker_metrics(db: Session = Depends(get_db)):
     oldest_job = db.query(PublishingJob).filter(PublishingJob.status == "QUEUED").order_by(PublishingJob.created_at.asc()).first()
     oldest_age = 0.0
     if oldest_job and oldest_job.created_at:
-        oldest_age = (datetime.utcnow() - oldest_job.created_at).total_seconds()
+        oldest_age = (datetime.now(UTC).replace(tzinfo=None) - oldest_job.created_at).total_seconds()
 
     avg_time = 0.0
     if WORKER_STATE["jobs_succeeded"] > 0:
@@ -565,7 +565,7 @@ async def get_worker_metrics(db: Session = Depends(get_db)):
         
     uptime = "offline"
     if WORKER_STATE["is_running"] and WORKER_STATE["started_at"]:
-        uptime = str(datetime.utcnow() - WORKER_STATE["started_at"])
+        uptime = str(datetime.now(UTC).replace(tzinfo=None) - WORKER_STATE["started_at"])
 
     # Worker heartbeats check
     from core.database.models import WorkerHeartbeat
@@ -574,7 +574,7 @@ async def get_worker_metrics(db: Session = Depends(get_db)):
         {
             "worker_id": hb.worker_id,
             "last_heartbeat_at": hb.last_heartbeat_at.isoformat() if hb.last_heartbeat_at else None,
-            "is_alive": (datetime.utcnow() - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
+            "is_alive": (datetime.now(UTC).replace(tzinfo=None) - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
         } for hb in heartbeats
     ]
 

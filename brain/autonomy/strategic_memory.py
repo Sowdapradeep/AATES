@@ -39,7 +39,7 @@ class StrategicMemory:
             self._store[category] = []
         self._store[category].append({
             **entry,
-            "recorded_at": datetime.datetime.utcnow().isoformat(),
+            "recorded_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         })
 
     def retrieve(self, category: str, limit: int = 20) -> list[dict[str, Any]]:

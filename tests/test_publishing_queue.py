@@ -1,7 +1,7 @@
 import uuid
 import pytest
 import asyncio
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 
@@ -94,7 +94,7 @@ async def test_crash_recovery(db):
 
 # 4. Queue Prioritization & Scheduled Timing Tests
 def test_queue_fetching_order(db):
-    now = datetime.utcnow()
+    now = datetime.now(UTC).replace(tzinfo=None)
     
     # 1. Standard low priority job
     job_low = PublishingJob(
@@ -171,7 +171,7 @@ def test_worker_heartbeat(db):
     hb = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id == worker_id).first()
     assert hb is not None
     assert hb.worker_id == worker_id
-    assert (datetime.utcnow() - hb.last_heartbeat_at).total_seconds() < 5
+    assert (datetime.now(UTC).replace(tzinfo=None) - hb.last_heartbeat_at).total_seconds() < 5
 
 
 # 6. REST API Endpoint Operations Tests

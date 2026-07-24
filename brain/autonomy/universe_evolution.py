@@ -116,7 +116,7 @@ class UniverseEvolutionEngine:
             "avg_quality": avg_quality,
             "avg_engagement": avg_engagement,
             "decisions_submitted": decisions_submitted,
-            "evaluated_at": datetime.datetime.utcnow().isoformat(),
+            "evaluated_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         }
         self._evolution_log.append(entry)
         strategic_memory.record("universe_performance", {

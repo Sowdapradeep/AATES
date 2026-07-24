@@ -67,3 +67,20 @@ temp_upload_test.mp4
 *.mp4
 !video/outputs/.gitkeep
 
+# Logs & coverage
+coverage/
+htmlcov/
+logs/
+*.log
+
+# Secrets & Certs
+*.pem
+*.key
+*.crt
+
+# Terraform
+terraform.tfstate
+terraform.tfstate.*
+.terraform/
+
+

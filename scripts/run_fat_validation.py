@@ -5,7 +5,7 @@ import json
 import psutil
 import platform
 import hashlib
-from datetime import datetime
+from datetime import UTC, datetime
 
 # Add root folder to pythonpath
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -260,7 +260,7 @@ def run_fat_checks() -> dict:
     results["summary"] = {
         "health_score": max(0, health_score),
         "total_duration_s": total_duration,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).replace(tzinfo=None).isoformat(),
         "platform_ready": "YES" if health_score >= 85 else "NO",
         "warnings": warnings
     }

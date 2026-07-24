@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Callable, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict
 
@@ -12,7 +12,7 @@ class EventMessage(BaseModel):
     event_type: str  # SCHEDULE, PACKAGE_CREATED, PACKAGE_UPDATED, QUALITY_APPROVED, PUBLISHING_COMPLETED, PUBLISHING_FAILED, LEARNING_RECOMMENDATION, EXPERIMENT_COMPLETED, RETRY_REQUESTED, MANUAL_TRIGGER, WEBHOOK_TRIGGER
     source: str
     payload: Dict[str, Any]
-    timestamp: str = datetime.utcnow().isoformat()
+    timestamp: str = datetime.now(UTC).replace(tzinfo=None).isoformat()
 
 class EventBus:
     """Internal Event Bus for decoupled event publishing, subscription, and event replay."""

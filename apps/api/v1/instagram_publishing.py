@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -93,14 +93,14 @@ async def get_instagram_metrics(db: Session = Depends(get_db)):
 
     uptime = "offline"
     if AGENT_STATE["is_running"] and AGENT_STATE["started_at"]:
-        uptime = str(datetime.utcnow() - AGENT_STATE["started_at"])
+        uptime = str(datetime.now(UTC).replace(tzinfo=None) - AGENT_STATE["started_at"])
 
     heartbeats = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id.like("instagram-worker-%")).all()
     active_hbs = [
         {
             "worker_id": hb.worker_id,
             "last_heartbeat_at": hb.last_heartbeat_at.isoformat() if hb.last_heartbeat_at else None,
-            "is_alive": (datetime.utcnow() - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
+            "is_alive": (datetime.now(UTC).replace(tzinfo=None) - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
         } for hb in heartbeats
     ]
 
@@ -144,7 +144,7 @@ async def retry_instagram_job(id: uuid.UUID, db: Session = Depends(get_db)):
     job.stage = "VALIDATING"
     job.progress = 0.0
     job.attempts = 0
-    job.scheduled_at = datetime.utcnow()
+    job.scheduled_at = datetime.now(UTC).replace(tzinfo=None)
     db.add(job)
     db.commit()
     db.refresh(job)
@@ -168,7 +168,7 @@ async def sync_instagram_publication(id: uuid.UUID, db: Session = Depends(get_db
     snapshot = InstagramInsightSnapshot(
         id=uuid.uuid4(),
         publication_id=pub.id,
-        captured_at=datetime.utcnow(),
+        captured_at=datetime.now(UTC).replace(tzinfo=None),
         views=insight_data["views"],
         reach=insight_data["reach"],
         impressions=insight_data["impressions"],

@@ -17,7 +17,7 @@ class NarrativeEventBus:
     def publish(self, event_type: str, payload: dict[str, Any]) -> None:
         event = {
             "event_type": event_type,
-            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "timestamp": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
             "payload": payload,
         }
         for handler in self._handlers.get(event_type, []):

@@ -37,7 +37,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - APP__ENV=development
+      - APP__ENV=production
       - DB__URL=postgresql://postgres:postgres@postgres:5432/aates
       - REDIS__URL=redis://redis:6379/0
     depends_on:
@@ -45,8 +45,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ../../:/app
 
   worker:
     build:
@@ -54,7 +52,7 @@ services:
       dockerfile: deployment/docker/Dockerfile.worker
     container_name: aates-worker
     environment:
-      - APP__ENV=development
+      - APP__ENV=production
       - DB__URL=postgresql://postgres:postgres@postgres:5432/aates
       - REDIS__URL=redis://redis:6379/0
     depends_on:
@@ -62,8 +60,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ../../:/app
 
   dashboard:
     build:
@@ -76,9 +72,6 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       - api
-    volumes:
-      - ../../apps/dashboard:/app
-      - /app/node_modules
 
 volumes:
   postgres_data:

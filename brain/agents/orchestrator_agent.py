@@ -50,7 +50,7 @@ STAGES = {
 }
 
 async def process_orchestration_job(db: Session, job: OrchestrationJob) -> None:
-    start_time = datetime.datetime.utcnow()
+    start_time = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
     job.started_at = start_time
     job.status = "PROCESSING"
     job.stage = "OBJECTIVE_ANALYSIS"
@@ -175,7 +175,7 @@ async def process_orchestration_job(db: Session, job: OrchestrationJob) -> None:
         db.add(version_snapshot)
 
         # Stage 9: COMPLETED
-        end_time = datetime.datetime.utcnow()
+        end_time = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         duration = (end_time - start_time).total_seconds()
 
         job.status = "SUCCESS"
@@ -192,7 +192,7 @@ async def process_orchestration_job(db: Session, job: OrchestrationJob) -> None:
 
     except Exception as e:
         db.rollback()
-        end_time = datetime.datetime.utcnow()
+        end_time = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         duration = (end_time - start_time).total_seconds()
 
         job.status = "FAILED"
@@ -213,10 +213,10 @@ async def _orchestrator_worker_loop(worker_id: str) -> None:
         try:
             hb = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id == worker_id).first()
             if not hb:
-                hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.datetime.utcnow())
+                hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
                 db.add(hb)
             else:
-                hb.last_heartbeat_at = datetime.datetime.utcnow()
+                hb.last_heartbeat_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             db.commit()
 
             job = db.query(OrchestrationJob).filter(OrchestrationJob.status == "QUEUED").order_by(OrchestrationJob.priority.desc(), OrchestrationJob.created_at.asc()).with_for_update(skip_locked=True).first()
@@ -236,7 +236,7 @@ async def start_orchestrator_agent() -> None:
     if AGENT_STATE["is_running"]:
         return
     AGENT_STATE["is_running"] = True
-    AGENT_STATE["started_at"] = datetime.datetime.utcnow()
+    AGENT_STATE["started_at"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
     logger.info("[OrchestratorAgent] Initializing background daemon...")
     for i in range(2):
         worker_id = f"orchestrator-worker-{i}"

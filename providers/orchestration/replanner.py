@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,7 @@ class ReplanningEvent(BaseModel):
     failed_node_id: Optional[str] = None
     action_taken: str  # RETRY_NODE, ALTERNATIVE_AGENT_ROUTE, PARAMETER_MUTATION, SKIP_NODE
     details: Dict[str, Any] = Field(default_factory=dict)
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None).isoformat())
 
 class AdaptiveReplanner:
     """Adaptive Replanner dynamically mutating DAG graphs in response to failures or learning signals."""

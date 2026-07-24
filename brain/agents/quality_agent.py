@@ -76,10 +76,10 @@ def update_agent_heartbeat(db: Session, agent_id: str) -> None:
     try:
         hb = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id == agent_id).first()
         if not hb:
-            hb = WorkerHeartbeat(worker_id=agent_id, last_heartbeat_at=datetime.datetime.utcnow())
+            hb = WorkerHeartbeat(worker_id=agent_id, last_heartbeat_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
             db.add(hb)
         else:
-            hb.last_heartbeat_at = datetime.datetime.utcnow()
+            hb.last_heartbeat_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -96,7 +96,7 @@ def recover_orphaned_jobs(db: Session) -> None:
             job.attempts += 1
             if job.attempts >= job.max_attempts:
                 job.status = "FAILED"
-                job.failed_at = datetime.datetime.utcnow()
+                job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                 job.error_code = "ORPHANED_LIMIT"
                 job.error_message = "Job orphaned repeatedly and exceeded max attempts."
         db.commit()
@@ -242,7 +242,7 @@ async def process_quality_job(db: Session, job: QualityJob) -> None:
             "is_approved_for_publishing": eval_res["is_approved_for_publishing"],
             "publishing_lifecycle_state": eval_res["publishing_lifecycle_state"],
             "validation_status": "PASSED" if eval_res["is_approved_for_publishing"] else "FLAGGED",
-            "created_at": datetime.datetime.utcnow().isoformat()
+            "created_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
         }
 
         # Create QualityPackage
@@ -387,7 +387,7 @@ async def process_quality_job(db: Session, job: QualityJob) -> None:
             job.status = "SUCCESS"
             job.stage = "COMPLETED"
             job.progress = STAGES["COMPLETED"]
-            job.completed_at = datetime.datetime.utcnow()
+            job.completed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             job.duration_sec = total_duration
             db.add(job)
             db.commit()
@@ -420,7 +420,7 @@ async def process_quality_job(db: Session, job: QualityJob) -> None:
             delay = get_backoff_delay(job.attempts)
             if is_valid_transition(job.status, "RETRYING"):
                 job.status = "RETRYING"
-                job.scheduled_at = datetime.datetime.utcnow() + datetime.timedelta(seconds=delay)
+                job.scheduled_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None) + datetime.timedelta(seconds=delay)
                 job.error_code = "TRANSIENT_ERROR"
                 job.error_message = error_msg
                 db.add(job)
@@ -430,7 +430,7 @@ async def process_quality_job(db: Session, job: QualityJob) -> None:
                 job.status = "FAILED"
                 job.stage = "FAILED"
                 job.progress = STAGES["FAILED"]
-                job.failed_at = datetime.datetime.utcnow()
+                job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                 job.error_code = "PERMANENT_ERROR"
                 job.error_message = error_msg
                 db.add(job)
@@ -447,7 +447,7 @@ async def quality_agent_poll_loop(agent_id: str) -> None:
 
             query = db.query(QualityJob).filter(
                 QualityJob.status.in_(["QUEUED", "RETRYING"]),
-                (QualityJob.scheduled_at == None) | (QualityJob.scheduled_at <= datetime.datetime.utcnow())
+                (QualityJob.scheduled_at == None) | (QualityJob.scheduled_at <= datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
             ).order_by(
                 QualityJob.priority.desc(),
                 QualityJob.created_at.asc()
@@ -461,7 +461,7 @@ async def quality_agent_poll_loop(agent_id: str) -> None:
             if job:
                 if is_valid_transition(job.status, "PROCESSING"):
                     job.status = "PROCESSING"
-                    job.started_at = datetime.datetime.utcnow()
+                    job.started_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                     db.commit()
 
                     await process_quality_job(db, job)
@@ -479,7 +479,7 @@ async def start_quality_agent(concurrency: int = 1) -> None:
     if AGENT_STATE["is_running"]:
         return
     AGENT_STATE["is_running"] = True
-    AGENT_STATE["started_at"] = datetime.datetime.utcnow()
+    AGENT_STATE["started_at"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
     db = SessionLocal()
     try:

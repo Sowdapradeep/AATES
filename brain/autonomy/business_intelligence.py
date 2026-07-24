@@ -40,7 +40,7 @@ class BusinessIntelligenceEngine:
         Expected keys: total_cost_usd, budget_usd, audience_growth_pct,
         avg_retention_pct, avg_completion_pct, avg_watch_time_sec, engagement_score.
         """
-        snapshot = {**metrics, "recorded_at": datetime.datetime.utcnow().isoformat()}
+        snapshot = {**metrics, "recorded_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()}
         self._snapshots.append(snapshot)
 
         cost = metrics.get("total_cost_usd", 0.0)

@@ -51,7 +51,7 @@ class WorldModel:
             self._state[dimension].update(value)
         else:
             self._state[dimension] = value
-        self._state["last_updated"] = datetime.datetime.utcnow().isoformat()
+        self._state["last_updated"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
 
     def snapshot(self) -> dict[str, Any]:
         """Return a copy of the current world state."""
@@ -64,9 +64,9 @@ class WorldModel:
     def register_universe(self, universe_id: str, metadata: dict[str, Any]) -> None:
         self._state["universes"][universe_id] = {
             **metadata,
-            "registered_at": datetime.datetime.utcnow().isoformat(),
+            "registered_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         }
-        self._state["last_updated"] = datetime.datetime.utcnow().isoformat()
+        self._state["last_updated"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
 
     def record_spend(self, amount_usd: float) -> None:
         """Update budget tracking after a Bedrock invocation."""
@@ -76,12 +76,12 @@ class WorldModel:
         self._state["budgets"]["remaining_usd"] = round(
             self._state["budgets"]["total_budget_usd"] - self._state["budgets"]["spent_usd"], 6
         )
-        self._state["last_updated"] = datetime.datetime.utcnow().isoformat()
+        self._state["last_updated"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
 
     def update_audience(self, metrics: dict[str, Any]) -> None:
         """Merge new audience metrics into the world model."""
         self._state["audience_metrics"].update(metrics)
-        self._state["last_updated"] = datetime.datetime.utcnow().isoformat()
+        self._state["last_updated"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
 
 
 # Module-level singleton

@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,17 +25,8 @@ logger = get_logger("api_server")
 from core.config.secrets import fetch_and_apply_secrets
 fetch_and_apply_secrets()
 
-app = FastAPI(
-    title=settings.app.name,
-    version=settings.app.version,
-    description="Autonomous AI Tamil Entertainment Studio foundation platform APIs.",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json"
-)
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     if settings.app.env != "testing":
         from core.database.session import SessionLocal, engine, Base
         from providers.registry import provider_registry
@@ -82,8 +74,8 @@ async def startup_event():
         from brain.agents.orchestrator_agent import start_orchestrator_agent
         await start_orchestrator_agent()
 
-@app.on_event("shutdown")
-async def shutdown_event():
+    yield
+
     if settings.app.env != "testing":
         from brain.operations.publishing_worker import stop_worker
         await stop_worker()
@@ -113,6 +105,16 @@ async def shutdown_event():
         await stop_automation_agent()
         from brain.agents.orchestrator_agent import stop_orchestrator_agent
         await stop_orchestrator_agent()
+
+app = FastAPI(
+    title=settings.app.name,
+    version=settings.app.version,
+    description="Autonomous AI Tamil Entertainment Studio foundation platform APIs.",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    lifespan=lifespan
+)
 
 # Configure CORS middleware
 app.add_middleware(

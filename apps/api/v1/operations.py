@@ -26,8 +26,8 @@ async def create_campaign(payload: dict, db: Session = Depends(get_db)) -> dict[
         description=payload.get("description"),
         universe_id=payload["universe_id"],
         season=payload.get("season", 1),
-        start_date=datetime.datetime.fromisoformat(payload.get("start_date", datetime.datetime.utcnow().isoformat())),
-        end_date=datetime.datetime.fromisoformat(payload.get("end_date", datetime.datetime.utcnow().isoformat())),
+        start_date=datetime.datetime.fromisoformat(payload.get("start_date", datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat())),
+        end_date=datetime.datetime.fromisoformat(payload.get("end_date", datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat())),
         status=payload.get("status", "draft"),
         priority=payload.get("priority", 0),
         platforms=payload.get("platforms", {})

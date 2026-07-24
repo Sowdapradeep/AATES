@@ -36,7 +36,7 @@ class ContinuousLearningEngine:
         """Ingest episode result and update all knowledge libraries."""
         self._episode_history.append({
             **episode_data,
-            "recorded_at": datetime.datetime.utcnow().isoformat(),
+            "recorded_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         })
 
         quality = episode_data.get("quality_score", 80.0)

@@ -93,7 +93,7 @@ class MissionEngine:
                 "mission_alignment": "Expand the universe canon",
             }
 
-        goal["created_at"] = datetime.datetime.utcnow().isoformat()
+        goal["created_at"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
         goal["status"] = "active"
         self.goals.append(goal)
         return goal
@@ -103,7 +103,7 @@ class MissionEngine:
         self.mission_progress.append({
             "goal_id": goal_id,
             "outcome": outcome,
-            "recorded_at": datetime.datetime.utcnow().isoformat(),
+            "recorded_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         })
         # Mark goal as completed
         for g in self.goals:

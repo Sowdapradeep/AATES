@@ -1,6 +1,6 @@
 import uuid
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
@@ -16,7 +16,7 @@ class Objective(BaseModel):
     target_kpi: Dict[str, Any] = Field(default_factory=dict)  # e.g., {"target_views": 10000, "target_ctr": 0.08}
     parameters: Dict[str, Any] = Field(default_factory=dict)
     status: str = "PENDING"  # PENDING, PLANNING, EXECUTING, COMPLETED, REPLANNING, FAILED
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None).isoformat())
 
 class ObjectiveManager:
     """Objective Manager maintaining active business objectives and targets."""

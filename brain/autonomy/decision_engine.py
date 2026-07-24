@@ -53,7 +53,7 @@ class Recommendation:
         self.target = target          # e.g. "story_bible", "prompt_library", "model_router"
         self.payload = payload
         self.estimated_impact = estimated_impact
-        self.submitted_at = datetime.datetime.utcnow().isoformat()
+        self.submitted_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
 
 
 class AutonomousDecisionEngine:
@@ -112,7 +112,7 @@ class AutonomousDecisionEngine:
                     "action": rec.action,
                     "target": rec.target,
                     "reason": "conflict:lower_priority",
-                    "at": datetime.datetime.utcnow().isoformat(),
+                    "at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
                 })
                 rejected_count += 1
                 continue
@@ -125,7 +125,7 @@ class AutonomousDecisionEngine:
                 "target": rec.target,
                 "payload": rec.payload,
                 "estimated_impact": rec.estimated_impact,
-                "committed_at": datetime.datetime.utcnow().isoformat(),
+                "committed_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
             }
             self._committed.append(committed_entry)
             committed_targets.add(target_key)

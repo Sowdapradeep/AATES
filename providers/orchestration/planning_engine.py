@@ -1,6 +1,6 @@
 import uuid
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
@@ -18,7 +18,7 @@ class ExecutionPlan(BaseModel):
     parallelism_factor: int = 2
     risk_score: float = 0.15
     expected_resources: Dict[str, Any] = Field(default_factory=dict)
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None).isoformat())
 
 class PlanningEngine:
     """Planning Engine generating strategic execution plans from business objectives."""

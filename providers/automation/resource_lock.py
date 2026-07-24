@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Dict, Optional
 from pydantic import BaseModel
 
@@ -18,7 +18,7 @@ class ResourceLockManager:
         self._locks: Dict[str, LockInfo] = {}
 
     def acquire_lock(self, resource_id: str, owner_instance_id: str, ttl_seconds: int = 120) -> bool:
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         if resource_id in self._locks:
             lock = self._locks[resource_id]
             expires = datetime.fromisoformat(lock.expires_at)
@@ -49,7 +49,7 @@ class ResourceLockManager:
         if resource_id not in self._locks:
             return False
         lock = self._locks[resource_id]
-        if datetime.utcnow() >= datetime.fromisoformat(lock.expires_at):
+        if datetime.now(UTC).replace(tzinfo=None) >= datetime.fromisoformat(lock.expires_at):
             del self._locks[resource_id]
             return False
         return True

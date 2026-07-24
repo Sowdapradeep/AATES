@@ -1,6 +1,6 @@
 import uuid
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 from providers.automation.event_bus import event_bus, EventMessage
@@ -15,7 +15,7 @@ class TriggerEvent(BaseModel):
     source_package_id: Optional[str] = None
     target_platform: str = "all"
     event_data: Dict[str, Any] = Field(default_factory=dict)
-    triggered_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    triggered_at: str = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None).isoformat())
 
 class TriggerManager:
     """Trigger Manager intercepting events from EventBus and registering trigger instances."""

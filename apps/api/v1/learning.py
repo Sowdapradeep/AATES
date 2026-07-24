@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional, List, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -80,14 +80,14 @@ async def get_learning_metrics(db: Session = Depends(get_db)):
 
     uptime = "offline"
     if AGENT_STATE["is_running"] and AGENT_STATE["started_at"]:
-        uptime = str(datetime.utcnow() - AGENT_STATE["started_at"])
+        uptime = str(datetime.now(UTC).replace(tzinfo=None) - AGENT_STATE["started_at"])
 
     heartbeats = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id.like("learning-worker-%")).all()
     active_hbs = [
         {
             "worker_id": hb.worker_id,
             "last_heartbeat_at": hb.last_heartbeat_at.isoformat() if hb.last_heartbeat_at else None,
-            "is_alive": (datetime.utcnow() - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
+            "is_alive": (datetime.now(UTC).replace(tzinfo=None) - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
         } for hb in heartbeats
     ]
 
@@ -145,7 +145,7 @@ async def submit_recommendation_feedback(payload: RecommendationFeedbackCreateDT
     fb = RecommendationFeedback(
         id=uuid.uuid4(),
         recommendation_id=payload.recommendation_id,
-        applied_at=datetime.utcnow(),
+        applied_at=datetime.now(UTC).replace(tzinfo=None),
         status=payload.status,
         initial_metric=payload.initial_metric or 0.0,
         measured_metric=payload.measured_metric or 0.0,

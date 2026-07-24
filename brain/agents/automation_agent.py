@@ -66,10 +66,10 @@ def update_worker_heartbeat(db: Session, worker_id: str) -> None:
     try:
         hb = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id == worker_id).first()
         if not hb:
-            hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.datetime.utcnow())
+            hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
             db.add(hb)
         else:
-            hb.last_heartbeat_at = datetime.datetime.utcnow()
+            hb.last_heartbeat_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -86,7 +86,7 @@ def recover_orphaned_jobs(db: Session) -> None:
             job.attempts += 1
             if job.attempts >= job.max_attempts:
                 job.status = "FAILED"
-                job.failed_at = datetime.datetime.utcnow()
+                job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                 job.error_code = "ORPHANED_LIMIT"
                 job.error_message = "Job orphaned repeatedly."
         db.commit()
@@ -167,7 +167,7 @@ async def process_automation_job(db: Session, job: AutomationJob, worker_id: str
         if not decision.is_approved:
             job.status = "FAILED"
             job.stage = "FAILED"
-            job.failed_at = datetime.datetime.utcnow()
+            job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             job.error_code = "DECISION_REJECTED"
             job.error_message = decision.decision_reason
             db.commit()
@@ -193,7 +193,7 @@ async def process_automation_job(db: Session, job: AutomationJob, worker_id: str
             trigger_id=trigger.trigger_id,
             policy_id=selected_policy.policy_id,
             execution_owner=worker_id,
-            worker_lease_expires_at=(datetime.datetime.utcnow() + datetime.timedelta(seconds=120)).isoformat(),
+            worker_lease_expires_at=(datetime.datetime.now(datetime.UTC).replace(tzinfo=None) + datetime.timedelta(seconds=120)).isoformat(),
             context=context
         )
 
@@ -262,7 +262,7 @@ async def process_automation_job(db: Session, job: AutomationJob, worker_id: str
             "workflow_id": wf_def.workflow_id,
             "policy_id": selected_policy.policy_id,
             "executed_actions_count": len(updated_instance.step_executions),
-            "created_at": datetime.datetime.utcnow().isoformat()
+            "created_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
         }
 
         auto_pkg = AutomationPackage(
@@ -304,7 +304,7 @@ async def process_automation_job(db: Session, job: AutomationJob, worker_id: str
             job.status = "SUCCESS"
             job.stage = "COMPLETED"
             job.progress = STAGES["COMPLETED"]
-            job.completed_at = datetime.datetime.utcnow()
+            job.completed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             job.duration_sec = total_duration
             db.add(job)
             db.commit()
@@ -350,7 +350,7 @@ async def process_automation_job(db: Session, job: AutomationJob, worker_id: str
         job.status = "FAILED"
         job.stage = "FAILED"
         job.progress = STAGES["FAILED"]
-        job.failed_at = datetime.datetime.utcnow()
+        job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         job.error_code = "WORKFLOW_EXECUTION_ERROR"
         job.error_message = error_msg
 
@@ -381,7 +381,7 @@ async def automation_worker_poll_loop(worker_id: str) -> None:
             if job:
                 if is_valid_transition(job.status, "PROCESSING"):
                     job.status = "PROCESSING"
-                    job.started_at = datetime.datetime.utcnow()
+                    job.started_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                     db.commit()
 
                     await process_automation_job(db, job, worker_id)
@@ -399,7 +399,7 @@ async def start_automation_agent(concurrency: int = 1) -> None:
     if AGENT_STATE["is_running"]:
         return
     AGENT_STATE["is_running"] = True
-    AGENT_STATE["started_at"] = datetime.datetime.utcnow()
+    AGENT_STATE["started_at"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
     db = SessionLocal()
     try:

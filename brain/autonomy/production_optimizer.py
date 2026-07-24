@@ -35,7 +35,7 @@ class ProductionOptimizer:
             "render_time_sec": render_time_sec,
             "cost_usd": cost_usd,
             "asset_reuse_hits": asset_reuse_hits,
-            "recorded_at": datetime.datetime.utcnow().isoformat(),
+            "recorded_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         })
         self._reuse_hits += asset_reuse_hits
         self._reuse_misses += asset_reuse_misses

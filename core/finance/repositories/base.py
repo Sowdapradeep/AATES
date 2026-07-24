@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Generic, List, Optional, Type, TypeVar
 from sqlalchemy.orm import Session
 from core.finance.models.base import FinanceBaseModel
@@ -46,7 +46,7 @@ class BaseFinanceRepository(Generic[ModelType]):
                     value = _to_uuid(value)
                 setattr(entity, key, value)
         entity.version += 1
-        entity.updated_at = datetime.utcnow()
+        entity.updated_at = datetime.now(UTC).replace(tzinfo=None)
         self.db.commit()
         self.db.refresh(entity)
         return entity

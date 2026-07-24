@@ -157,7 +157,7 @@ class StoryBibleEngine:
 
             audit_record = {
                 "change_id": str(uuid.uuid4()),
-                "timestamp": datetime.datetime.utcnow().isoformat(),
+                "timestamp": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
                 "authoring_agent": author,
                 "reason": reason,
                 "section": section,

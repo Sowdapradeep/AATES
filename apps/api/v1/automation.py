@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional, List, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -82,14 +82,14 @@ async def get_automation_metrics(db: Session = Depends(get_db)):
 
     uptime = "offline"
     if AGENT_STATE["is_running"] and AGENT_STATE["started_at"]:
-        uptime = str(datetime.utcnow() - AGENT_STATE["started_at"])
+        uptime = str(datetime.now(UTC).replace(tzinfo=None) - AGENT_STATE["started_at"])
 
     heartbeats = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id.like("automation-worker-%")).all()
     active_hbs = [
         {
             "worker_id": hb.worker_id,
             "last_heartbeat_at": hb.last_heartbeat_at.isoformat() if hb.last_heartbeat_at else None,
-            "is_alive": (datetime.utcnow() - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
+            "is_alive": (datetime.now(UTC).replace(tzinfo=None) - hb.last_heartbeat_at).total_seconds() < 30 if hb.last_heartbeat_at else False
         } for hb in heartbeats
     ]
 
@@ -131,7 +131,7 @@ async def list_policies(db: Session = Depends(get_db)):
             "cooldown_sec": p.cooldown_sec,
             "platforms": p.platforms,
             "applicable_agents": p.applicable_agents,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(UTC).replace(tzinfo=None)
         } for p in policies
     ]
 

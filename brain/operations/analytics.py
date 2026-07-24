@@ -32,7 +32,7 @@ class AnalyticsIngestor:
             comments=comments,
             shares=shares,
             follower_growth=follower_growth,
-            recorded_at=datetime.datetime.utcnow()
+            recorded_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         )
         db.add(snapshot)
 
@@ -46,7 +46,7 @@ class AnalyticsIngestor:
                 "views": views,
                 "watch_time": watch_time
             },
-            timestamp=datetime.datetime.utcnow()
+            timestamp=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         ))
         db.flush()
         return snapshot

@@ -1,6 +1,6 @@
 import uuid
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 from core.database.models import Budget, ProviderCost, EpisodeCost, DailyCost, MonthlyCost
 
@@ -28,7 +28,7 @@ class BillingEngine:
                     id=str(uuid.uuid4()),
                     event_type="budget_limit_exceeded",
                     payload={"universe_id": str(universe_id), "spent": budget.spent_amount, "allocated": budget.allocated_amount},
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.now(UTC).replace(tzinfo=None)
                 ))
                 db.flush()
                 logger.error(f"Billing: Budget limit exceeded for universe {universe_id}. Spent: {budget.spent_amount}, Allocated: {budget.allocated_amount}")
@@ -66,12 +66,12 @@ class BillingEngine:
                     id=uuid.uuid4(),
                     provider_name=provider_name,
                     total_spent=cost,
-                    last_call_timestamp=datetime.utcnow()
+                    last_call_timestamp=datetime.now(UTC).replace(tzinfo=None)
                 )
                 db.add(prov_cost)
             else:
                 prov_cost.total_spent += cost
-                prov_cost.last_call_timestamp = datetime.utcnow()
+                prov_cost.last_call_timestamp = datetime.now(UTC).replace(tzinfo=None)
                 
             # 2. Update Episode Cost
             if episode_id:
@@ -105,7 +105,7 @@ class BillingEngine:
                     budget.spent_amount += cost
                     
             # 4. Update Daily Cost (normalized to midnight)
-            today_date = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_date = datetime.now(UTC).replace(tzinfo=None).replace(hour=0, minute=0, second=0, microsecond=0)
             d_cost = db.query(DailyCost).filter(DailyCost.date == today_date).first()
             if not d_cost:
                 d_cost = DailyCost(
@@ -118,7 +118,7 @@ class BillingEngine:
                 d_cost.total_spent += cost
 
             # 5. Update Monthly Cost (YYYY-MM string format)
-            month_str = datetime.utcnow().strftime("%Y-%m")
+            month_str = datetime.now(UTC).replace(tzinfo=None).strftime("%Y-%m")
             m_cost = db.query(MonthlyCost).filter(MonthlyCost.month == month_str).first()
             if not m_cost:
                 m_cost = MonthlyCost(

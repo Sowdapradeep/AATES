@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Generic, List, Optional, Type, TypeVar
 from sqlalchemy.orm import Session
 from core.narrative.models.base import NarrativeBaseModel
@@ -57,7 +57,7 @@ class BaseRepository(Generic[ModelType]):
                     value = _to_uuid(value)
                 setattr(entity, key, value)
         entity.version += 1
-        entity.updated_at = datetime.utcnow()
+        entity.updated_at = datetime.now(UTC).replace(tzinfo=None)
         self.db.commit()
         self.db.refresh(entity)
         return entity
@@ -67,7 +67,7 @@ class BaseRepository(Generic[ModelType]):
         if not entity:
             return False
         entity.is_deleted = True
-        entity.deleted_at = datetime.utcnow()
+        entity.deleted_at = datetime.now(UTC).replace(tzinfo=None)
         entity.status = "deleted"
         self.db.commit()
         return True

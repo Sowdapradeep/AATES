@@ -1,6 +1,6 @@
 import uuid
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
@@ -27,7 +27,7 @@ class ExecutionDAG(BaseModel):
     plan_id: str
     nodes: Dict[str, TaskNode] = Field(default_factory=dict)
     critical_path: List[str] = Field(default_factory=list)
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None).isoformat())
 
 class TaskGraphBuilder:
     """Task Graph Builder converting high-level ExecutionPlans into executable DAG graphs."""

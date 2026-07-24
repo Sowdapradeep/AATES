@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
@@ -11,7 +11,7 @@ class ExecutionContext(BaseModel):
     shared_variables: Dict[str, Any] = Field(default_factory=dict)
     action_results: Dict[str, Any] = Field(default_factory=dict)
     telemetry: Dict[str, Any] = Field(default_factory=dict)
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None).isoformat())
 
     def get_package_id(self, package_type: str) -> Optional[str]:
         return self.package_references.get(package_type)

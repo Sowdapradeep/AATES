@@ -4,7 +4,7 @@ import json
 import time
 import uuid
 import httpx
-from datetime import datetime
+from datetime import UTC, datetime
 
 # Add root folder to pythonpath
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,7 +16,7 @@ def run_production_acceptance_test() -> dict:
     """Executes the full end-to-end Production Acceptance Test (PAT) to generate a complete episode."""
     logger_logs = []
     def log_step(msg: str):
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(UTC).replace(tzinfo=None).isoformat()
         logger_logs.append(f"[{timestamp}] {msg}")
         print(f"PAT: {msg}")
 
@@ -278,7 +278,7 @@ def run_production_acceptance_test() -> dict:
     with open(report_file, "w") as f:
         f.write(f"""# AATES Production Acceptance Test (PAT) Report
 
-Generated at: {datetime.utcnow().isoformat()} UTC
+Generated at: {datetime.now(UTC).replace(tzinfo=None).isoformat()} UTC
 Status: **SUCCESS (PASS)**
 Universe ID: `{universe_id}`
 Episode ID: `{episode_id}`

@@ -140,5 +140,14 @@ def fetch_and_apply_secrets() -> None:
         )
         sys.exit(1)
 
+    # Fail-fast validations for production mode
+    if settings.app.env == "production":
+        if settings.security.secret_key in (None, "", "supersecretkey_change_me_in_production", "local_dev_secret_key_do_not_use_in_prod"):
+            logger.critical("PRODUCTION DEPLOYMENT ERROR: JWT secret key is not set or using default fallback! Halting startup.")
+            sys.exit(1)
+        if "sqlite" in settings.db.url.lower():
+            logger.critical("PRODUCTION DEPLOYMENT ERROR: SQLite database is configured for production! Halting startup.")
+            sys.exit(1)
+
     # Perform final S3 and Bedrock validation checks
     verify_aws_startup_prerequisites()

@@ -5,7 +5,7 @@ import json
 import uuid
 import logging
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timezone, timedelta
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
@@ -48,10 +48,10 @@ def update_heartbeat(db: Session, worker_id: str) -> None:
     try:
         hb = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id == worker_id).first()
         if not hb:
-            hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.utcnow())
+            hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.now(UTC).replace(tzinfo=None))
             db.add(hb)
         else:
-            hb.last_heartbeat_at = datetime.utcnow()
+            hb.last_heartbeat_at = datetime.now(UTC).replace(tzinfo=None)
             db.add(hb)
         db.commit()
     except Exception as e:
@@ -108,7 +108,7 @@ async def process_job(db: Session, job: PublishingJob):
     }))
 
     job.status = "PROCESSING"
-    job.started_at = datetime.utcnow()
+    job.started_at = datetime.now(UTC).replace(tzinfo=None)
     job.attempts += 1
     db.add(job)
     db.commit()
@@ -124,7 +124,7 @@ async def process_job(db: Session, job: PublishingJob):
     if not provider_instance:
         if is_valid_transition(job.status, "FAILED"):
             job.status = "FAILED"
-            job.failed_at = datetime.utcnow()
+            job.failed_at = datetime.now(UTC).replace(tzinfo=None)
             job.error_code = "PROVIDER_NOT_FOUND"
             job.error_message = f"Publishing provider '{job.provider}' not registered."
             db.add(job)
@@ -166,7 +166,7 @@ async def process_job(db: Session, job: PublishingJob):
 
         if is_valid_transition(job.status, "SUCCESS"):
             job.status = "SUCCESS"
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(UTC).replace(tzinfo=None)
             job.video_id = video_id
             job.provider_response = res
             job.error_code = None
@@ -209,7 +209,7 @@ async def process_job(db: Session, job: PublishingJob):
 
             if is_valid_transition(job.status, "RETRYING"):
                 job.status = "RETRYING"
-                job.scheduled_at = datetime.utcnow() + timedelta(seconds=backoff)
+                job.scheduled_at = datetime.now(UTC).replace(tzinfo=None) + timedelta(seconds=backoff)
                 job.error_code = "TRANSIENT_ERROR"
                 job.error_message = error_msg
                 db.add(job)
@@ -227,7 +227,7 @@ async def process_job(db: Session, job: PublishingJob):
         else:
             if is_valid_transition(job.status, "FAILED"):
                 job.status = "FAILED"
-                job.failed_at = datetime.utcnow()
+                job.failed_at = datetime.now(UTC).replace(tzinfo=None)
                 job.error_code = "PERMANENT_ERROR" if not is_trans else "MAX_ATTEMPTS_EXCEEDED"
                 job.error_message = error_msg
                 db.add(job)
@@ -261,7 +261,7 @@ async def worker_poll_loop(worker_id: str, shutdown_event: asyncio.Event):
             db = SessionLocal()
             update_heartbeat(db, worker_id)
 
-            now = datetime.utcnow()
+            now = datetime.now(UTC).replace(tzinfo=None)
 
             # FIFO + Priority + Scheduled query
             query = db.query(PublishingJob).filter(
@@ -311,7 +311,7 @@ async def start_worker(num_workers: int = 2):
 
     _shutdown_event.clear()
     WORKER_STATE["is_running"] = True
-    WORKER_STATE["started_at"] = datetime.utcnow()
+    WORKER_STATE["started_at"] = datetime.now(UTC).replace(tzinfo=None)
 
     for i in range(num_workers):
         worker_id = f"worker-{i}"

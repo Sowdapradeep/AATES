@@ -35,6 +35,10 @@ def test_complete_autonomous_production_pipeline(client: TestClient) -> None:
     # ==========================================
     # 2. Story Bible Audits
     # ==========================================
+    from core.config.settings import settings
+    settings.publishing.instagram_access_token = None
+    settings.publishing.instagram_business_account_id = None
+
     bible_update = client.post(
         f"/v1/universes/{universe_id}/bible",
         json={

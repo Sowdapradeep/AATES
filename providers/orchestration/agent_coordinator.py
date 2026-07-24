@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, Optional
 from pydantic import BaseModel
 
@@ -24,7 +24,7 @@ class AgentCoordinator:
             "action_type": node.action_type,
             "output_id": f"out_{node.node_id}",
             "status": "COMPLETED",
-            "completed_at": datetime.utcnow().isoformat()
+            "completed_at": datetime.now(UTC).replace(tzinfo=None).isoformat()
         }
 
         return result, True, None

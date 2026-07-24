@@ -33,7 +33,7 @@ class AgentProfile:
         self.runs.append({
             "quality": quality, "cost": cost,
             "latency_ms": latency_ms, "success": success,
-            "at": datetime.datetime.utcnow().isoformat(),
+            "at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         })
 
     @property

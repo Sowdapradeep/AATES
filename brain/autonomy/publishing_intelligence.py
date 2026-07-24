@@ -41,7 +41,7 @@ class PublishingIntelligenceEngine:
         self._analytics_history.append({
             "episode_id": episode_id,
             **publish_data,
-            "recorded_at": datetime.datetime.utcnow().isoformat(),
+            "recorded_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat(),
         })
 
         engagement = publish_data.get("engagement_score", 0.5)

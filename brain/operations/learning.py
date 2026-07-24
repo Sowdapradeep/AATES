@@ -94,7 +94,7 @@ class LearningEngine:
             expected_impact=impact,
             confidence=confidence,
             status="pending",
-            created_at=datetime.datetime.utcnow()
+            created_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         )
         db.add(rec)
 
@@ -103,7 +103,7 @@ class LearningEngine:
             id=str(uuid.uuid4()),
             event_type="recommendation_generated",
             payload={"episode_id": episode_id, "category": category, "confidence": confidence},
-            timestamp=datetime.datetime.utcnow()
+            timestamp=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         ))
         return rec
 
@@ -133,7 +133,7 @@ class LearningEngine:
                 "approved": approved,
                 "decision_text": decision_text
             },
-            timestamp=datetime.datetime.utcnow()
+            timestamp=datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         ))
         db.flush()
         return rec

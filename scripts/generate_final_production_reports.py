@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 
 def generate_production_reports():
     """Generates final production documentation files under docs/production/."""
@@ -10,7 +10,7 @@ def generate_production_reports():
     with open(f"{docs_path}/deployment_report.md", "w") as f:
         f.write(f"""# AATES Production AWS Deployment Activation Report
 
-Generated at: {datetime.utcnow().isoformat()} UTC
+Generated at: {datetime.now(UTC).replace(tzinfo=None).isoformat()} UTC
 Status: **SUCCESS (PASS)**
 
 * EC2 Instance Status: **HEALTHY**

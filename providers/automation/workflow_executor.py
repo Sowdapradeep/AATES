@@ -4,7 +4,7 @@ import json
 import logging
 import time
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
@@ -58,7 +58,7 @@ class WorkflowExecutor:
     ) -> WorkflowInstance:
         """Execute all steps in a WorkflowDefinition sequentially or in parallel."""
         instance.status = "RUNNING"
-        instance.started_at = datetime.utcnow().isoformat()
+        instance.started_at = datetime.now(UTC).replace(tzinfo=None).isoformat()
         logger.info(f"[WorkflowExecutor] Started WorkflowInstance '{instance.instance_id}' for Workflow '{workflow_def.workflow_id}'")
 
         # Acquire resource lock if target package is present
@@ -76,7 +76,7 @@ class WorkflowExecutor:
                     target_agent=step.target_agent,
                     idempotency_key=idem_key,
                     status="IN_PROGRESS",
-                    started_at=datetime.utcnow().isoformat()
+                    started_at=datetime.now(UTC).replace(tzinfo=None).isoformat()
                 )
                 instance.step_executions.append(step_exec)
 
@@ -87,7 +87,7 @@ class WorkflowExecutor:
                 exec_ms = int((time.monotonic() - start_ts) * 1000)
 
                 step_exec.execution_ms = exec_ms
-                step_exec.completed_at = datetime.utcnow().isoformat()
+                step_exec.completed_at = datetime.now(UTC).replace(tzinfo=None).isoformat()
 
                 if success:
                     step_exec.status = "SUCCESS"
@@ -108,15 +108,15 @@ class WorkflowExecutor:
                             "step_id": step.step_id,
                             "compensation_action": step.compensation_action.model_dump(),
                             "result": comp_res,
-                            "executed_at": datetime.utcnow().isoformat()
+                            "executed_at": datetime.now(UTC).replace(tzinfo=None).isoformat()
                         })
 
                     instance.status = "FAILED"
-                    instance.completed_at = datetime.utcnow().isoformat()
+                    instance.completed_at = datetime.now(UTC).replace(tzinfo=None).isoformat()
                     return instance
 
             instance.status = "SUCCESS"
-            instance.completed_at = datetime.utcnow().isoformat()
+            instance.completed_at = datetime.now(UTC).replace(tzinfo=None).isoformat()
             logger.info(f"[WorkflowExecutor] Completed WorkflowInstance '{instance.instance_id}' with status SUCCESS")
             return instance
 
@@ -139,7 +139,7 @@ class WorkflowExecutor:
             "target_agent": target_agent,
             "status": "COMPLETED",
             "output_reference_id": str(uuid.uuid4()),
-            "executed_at": datetime.utcnow().isoformat()
+            "executed_at": datetime.now(UTC).replace(tzinfo=None).isoformat()
         }
         return res, True, None
 

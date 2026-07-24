@@ -64,10 +64,10 @@ def update_worker_heartbeat(db: Session, worker_id: str) -> None:
     try:
         hb = db.query(WorkerHeartbeat).filter(WorkerHeartbeat.worker_id == worker_id).first()
         if not hb:
-            hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.datetime.utcnow())
+            hb = WorkerHeartbeat(worker_id=worker_id, last_heartbeat_at=datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
             db.add(hb)
         else:
-            hb.last_heartbeat_at = datetime.datetime.utcnow()
+            hb.last_heartbeat_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -84,7 +84,7 @@ def recover_orphaned_jobs(db: Session) -> None:
             job.attempts += 1
             if job.attempts >= job.max_attempts:
                 job.status = "FAILED"
-                job.failed_at = datetime.datetime.utcnow()
+                job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                 job.error_code = "ORPHANED_LIMIT"
                 job.error_message = "Job orphaned repeatedly."
         db.commit()
@@ -131,8 +131,8 @@ async def process_learning_job(db: Session, job: LearningJob) -> None:
             job_id=job.id,
             dataset_name=f"AATES Dataset {job.target_platform.upper()} ({job.learning_mode})",
             sample_count=len(feature_vectors),
-            start_date=datetime.datetime.utcnow() - datetime.timedelta(days=job.learning_window_days),
-            end_date=datetime.datetime.utcnow(),
+            start_date=datetime.datetime.now(datetime.UTC).replace(tzinfo=None) - datetime.timedelta(days=job.learning_window_days),
+            end_date=datetime.datetime.now(datetime.UTC).replace(tzinfo=None),
             feature_vectors_snapshot=dataset_snapshot
         )
         db.add(dataset)
@@ -180,7 +180,7 @@ async def process_learning_job(db: Session, job: LearningJob) -> None:
             "model_version": "v1.0",
             "signals_count": len(eval_result["signals"]),
             "recommendations_count": len(eval_result["recommendations"]),
-            "created_at": datetime.datetime.utcnow().isoformat()
+            "created_at": datetime.datetime.now(datetime.UTC).replace(tzinfo=None).isoformat()
         }
 
         # Create LearningPackage
@@ -298,7 +298,7 @@ async def process_learning_job(db: Session, job: LearningJob) -> None:
             job.status = "SUCCESS"
             job.stage = "COMPLETED"
             job.progress = STAGES["COMPLETED"]
-            job.completed_at = datetime.datetime.utcnow()
+            job.completed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             job.duration_sec = total_duration
             db.add(job)
             db.commit()
@@ -346,7 +346,7 @@ async def process_learning_job(db: Session, job: LearningJob) -> None:
         job.status = "FAILED"
         job.stage = "FAILED"
         job.progress = STAGES["FAILED"]
-        job.failed_at = datetime.datetime.utcnow()
+        job.failed_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         job.error_code = "ANALYSIS_ERROR"
         job.error_message = error_msg
 
@@ -377,7 +377,7 @@ async def learning_worker_poll_loop(worker_id: str) -> None:
             if job:
                 if is_valid_transition(job.status, "PROCESSING"):
                     job.status = "PROCESSING"
-                    job.started_at = datetime.datetime.utcnow()
+                    job.started_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
                     db.commit()
 
                     await process_learning_job(db, job)
@@ -395,7 +395,7 @@ async def start_learning_agent(concurrency: int = 1) -> None:
     if AGENT_STATE["is_running"]:
         return
     AGENT_STATE["is_running"] = True
-    AGENT_STATE["started_at"] = datetime.datetime.utcnow()
+    AGENT_STATE["started_at"] = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
     db = SessionLocal()
     try:
