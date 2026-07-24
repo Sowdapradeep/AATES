@@ -9,7 +9,6 @@ video/outputs
 docs
 tests
 artifacts
-brain
 .gemini
 __pycache__
 *.pyc
