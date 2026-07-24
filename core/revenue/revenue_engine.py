@@ -67,11 +67,16 @@ class RevenueGenerationEngine:
             logger.info("Bypassing daily publishing limit check (BYPASS_DAILY_LIMIT=true)")
             return False
 
-        today = datetime.datetime.now(datetime.timezone.utc).date()
+        tz_india = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+        today = datetime.datetime.now(tz_india).date()
         recent_campaigns = self.db.query(MarketingCampaign).all()
         for camp in recent_campaigns:
-            if camp.created_at and camp.created_at.date() == today:
-                return True
+            if camp.created_at:
+                # Convert naive UTC datetime from database to aware UTC, then to IST
+                camp_utc = camp.created_at.replace(tzinfo=datetime.timezone.utc)
+                camp_ist = camp_utc.astimezone(tz_india)
+                if camp_ist.date() == today:
+                    return True
         return False
 
     async def execute_autonomous_production_cycle(
