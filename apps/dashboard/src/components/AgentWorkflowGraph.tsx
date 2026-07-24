@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Play, RotateCcw, CheckCircle2, Cpu, Sparkles, Activity, Layers, Share2, DollarSign, BookOpen, ShieldCheck, Film, Zap } from "lucide-react";
+import { Play, RotateCcw, CheckCircle2, Cpu, Sparkles, Activity, Layers, Share2, DollarSign, BookOpen, ShieldCheck, Film, Zap, Search, Music, Image, Volume2, FileText, Video, Instagram, Brain } from "lucide-react";
 
 export interface PipelineNode {
   id: string;
@@ -33,7 +33,7 @@ export function AgentWorkflowGraph() {
   // Poll Real-Time Backend Telemetry every 3 seconds
   useEffect(() => {
     const fetchStatus = () => {
-      fetch("http://localhost:8000/v1/revenue/pipeline-status")
+      fetch("/api/v1/revenue/pipeline-status")
         .then((res) => res.json())
         .then((data) => {
           if (data && data.latest_job_id) {
@@ -54,91 +54,179 @@ export function AgentWorkflowGraph() {
   const initialNodes: PipelineNode[] = [
     {
       id: "node-1",
-      name: "Autonomous Trigger",
-      sub: "apps.worker.main loop",
+      name: "Automation Agent",
+      sub: "AI Policy Scheduler",
       role: "Trigger Daemon",
       status: "completed",
       kpi: liveTelemetry?.is_worker_alive ? "Daemon Online" : "60s interval",
       x: 40,
-      y: 160,
+      y: 180,
       iconName: "zap"
     },
     {
       id: "node-2",
       name: "CEO Orchestrator",
-      sub: "Executive Queue",
+      sub: "Cognitive Event Bus",
       role: "CEO Agent",
       status: "completed",
       kpi: liveTelemetry?.latest_job_id || "job_auto_active",
-      x: 230,
-      y: 160,
+      x: 220,
+      y: 180,
       iconName: "layers"
     },
     {
       id: "node-3",
       name: "Financial Governor",
-      sub: "Cost & Budget Authorization",
+      sub: "Cost & Budget Auth",
       role: "Business Agent",
       status: "completed",
       kpi: `$${liveTelemetry?.daily_spent_usd || 0.10} spent / $10 cap`,
-      x: 420,
+      x: 400,
       y: 100,
       iconName: "dollar"
     },
     {
       id: "node-4",
-      name: "Creative Director AI",
+      name: "Creative Director",
       sub: "Bedrock Nova Reasoning",
       role: "Lore Guardian",
       status: "current",
-      kpi: liveTelemetry?.latest_episode_title ? liveTelemetry.latest_episode_title.slice(0, 22) + "..." : "Nova Pro Reasoning",
-      x: 420,
-      y: 220,
+      kpi: liveTelemetry?.latest_episode_title ? liveTelemetry.latest_episode_title.slice(0, 18) + "..." : "Nova Pro Reasoning",
+      x: 400,
+      y: 260,
       iconName: "book"
     },
     {
-      id: "node-5a",
-      name: "Asset Frame Render",
-      sub: "Titan Image & Audio Sync",
-      role: "Production Lead",
+      id: "node-prep-1",
+      name: "Research Agent",
+      sub: "Market & Topic Research",
+      role: "Trend Analyst",
       status: "pending",
-      kpi: "BLUEPRINT_COMPILED",
-      x: 650,
+      kpi: "Trends Evaluated",
+      x: 580,
+      y: 180,
+      iconName: "search"
+    },
+    {
+      id: "node-prep-2",
+      name: "Script Agent",
+      sub: "Tamil Screenplay Writer",
+      role: "Creative Writer",
+      status: "pending",
+      kpi: "Screenplay Outlined",
+      x: 760,
+      y: 180,
+      iconName: "filetext"
+    },
+    {
+      id: "node-gen-1",
+      name: "Image Agent",
+      sub: "Stable Image Generation",
+      role: "Visual Lead",
+      status: "pending",
+      kpi: "Scene Frames Done",
+      x: 940,
       y: 60,
+      iconName: "image"
+    },
+    {
+      id: "node-gen-2",
+      name: "Voice Agent",
+      sub: "Dialogue Speech Synthesis",
+      role: "Voice Actor",
+      status: "pending",
+      kpi: "TTS Audios Ready",
+      x: 940,
+      y: 180,
+      iconName: "volume2"
+    },
+    {
+      id: "node-gen-3",
+      name: "Music Agent",
+      sub: "Backtrack Composer",
+      role: "Music Director",
+      status: "pending",
+      kpi: "Soundtracks Synced",
+      x: 940,
+      y: 300,
+      iconName: "music"
+    },
+    {
+      id: "node-post-1",
+      name: "Subtitle Agent",
+      sub: "SRT Timing Generator",
+      role: "Sync Specialist",
+      status: "pending",
+      kpi: "Tamil SRT Timed",
+      x: 1120,
+      y: 60,
+      iconName: "filetext"
+    },
+    {
+      id: "node-post-2",
+      name: "Video Compositor",
+      sub: "FFmpeg Rendering Engine",
+      role: "Video Editor",
+      status: "pending",
+      kpi: "MP4 Rendered",
+      x: 1120,
+      y: 180,
       iconName: "film"
     },
     {
-      id: "node-5b",
-      name: "Tamil Dialogue Adaptor",
-      sub: "Regional Slang Adaptor",
-      role: "Dialogue Lead",
+      id: "node-post-3",
+      name: "Thumbnail Agent",
+      sub: "Card Cover Designer",
+      role: "Graphic Lead",
       status: "pending",
-      kpi: "100% Tamil realism",
-      x: 650,
-      y: 160,
-      iconName: "cpu"
+      kpi: "Thumbnails Created",
+      x: 1120,
+      y: 300,
+      iconName: "image"
+    },
+    {
+      id: "node-qa",
+      name: "Quality QA Guard",
+      sub: "Compliance & Safety",
+      role: "Audit Inspector",
+      status: "pending",
+      kpi: "QA Checks Passed",
+      x: 1300,
+      y: 180,
+      iconName: "shield"
     },
     {
       id: "node-5c",
-      name: "Marketing Engine",
-      sub: "Viral Hooks & Hashtags",
+      name: "Learning Agent",
+      sub: "Feedback & Ingestion",
       role: "Audience Lead",
       status: "pending",
-      kpi: liveTelemetry?.latest_viral_hook ? liveTelemetry.latest_viral_hook.slice(0, 20) + "..." : "#AATES #Shorts",
-      x: 650,
-      y: 260,
-      iconName: "sparkles"
+      kpi: liveTelemetry?.latest_viral_hook ? liveTelemetry.latest_viral_hook.slice(0, 15) + "..." : "#AATES #Shorts",
+      x: 1480,
+      y: 180,
+      iconName: "brain"
     },
     {
       id: "node-6",
-      name: "YouTube Shorts Publish",
-      sub: "Channel UCNZrTavbUchfVyHD...",
+      name: "YouTube Publisher",
+      sub: "YouTube Shorts Upload",
       role: "Publishing Lead",
       status: "pending",
-      kpi: `${liveTelemetry?.published_today || 1}/${liveTelemetry?.daily_publishing_cap || 1} Daily Release Cap`,
-      x: 880,
-      y: 160,
+      kpi: `${liveTelemetry?.published_today || 1}/${liveTelemetry?.daily_publishing_cap || 1} Uploaded`,
+      x: 1660,
+      y: 100,
       iconName: "share"
+    },
+    {
+      id: "node-pub-ig",
+      name: "Instagram Publisher",
+      sub: "Instagram Reels Upload",
+      role: "Publishing Lead",
+      status: "pending",
+      kpi: "Reels Posted",
+      x: 1660,
+      y: 260,
+      iconName: "instagram"
     }
   ];
 
@@ -147,11 +235,22 @@ export function AgentWorkflowGraph() {
     let status: "completed" | "current" | "pending" = "pending";
 
     if (isLiveConnected && liveTelemetry && liveTelemetry.nodes_status) {
-      if (liveTelemetry.current_active_node === node.id) {
+      let statusKey = node.id;
+      if (node.id === "node-prep-1" || node.id === "node-prep-2") {
+        statusKey = "node-4";
+      } else if (node.id === "node-gen-1" || node.id === "node-gen-2" || node.id === "node-gen-3" || node.id === "node-post-2" || node.id === "node-post-3" || node.id === "node-qa") {
+        statusKey = "node-5a";
+      } else if (node.id === "node-post-1") {
+        statusKey = "node-5b";
+      } else if (node.id === "node-pub-ig") {
+        statusKey = "node-6";
+      }
+
+      if (liveTelemetry.current_active_node === statusKey) {
         status = "current";
-      } else if (liveTelemetry.nodes_status[node.id] === "completed") {
+      } else if (liveTelemetry.nodes_status[statusKey] === "completed") {
         status = "completed";
-      } else if (liveTelemetry.nodes_status[node.id] === "current") {
+      } else if (liveTelemetry.nodes_status[statusKey] === "current") {
         status = "current";
       }
     } else {
@@ -187,9 +286,17 @@ export function AgentWorkflowGraph() {
       case "layers": return <Layers className={cls} />;
       case "dollar": return <DollarSign className={cls} />;
       case "book": return <BookOpen className={cls} />;
+      case "search": return <Search className={cls} />;
+      case "filetext": return <FileText className={cls} />;
+      case "image": return <Image className={cls} />;
+      case "volume2": return <Volume2 className={cls} />;
+      case "music": return <Music className={cls} />;
       case "film": return <Film className={cls} />;
+      case "shield": return <ShieldCheck className={cls} />;
       case "sparkles": return <Sparkles className={cls} />;
       case "share": return <Share2 className={cls} />;
+      case "instagram": return <Instagram className={cls} />;
+      case "brain": return <Brain className={cls} />;
       default: return <Cpu className={cls} />;
     }
   };
@@ -269,14 +376,14 @@ export function AgentWorkflowGraph() {
 
       {/* Node Graph Canvas Area */}
       <div 
-        className="relative w-full overflow-x-auto rounded-2xl border border-slate-800 p-4 min-h-[380px] bg-slate-950"
+        className="relative w-full overflow-x-auto rounded-2xl border border-slate-800 p-4 min-h-[460px] bg-slate-950"
         style={{
           backgroundImage: "radial-gradient(#334155 1.5px, transparent 1.5px)",
           backgroundSize: "24px 24px"
         }}
       >
         {/* SVG Bezier Edges Layer */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ minWidth: "1050px" }}>
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ minWidth: "1850px" }}>
           <defs>
             <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
@@ -291,7 +398,7 @@ export function AgentWorkflowGraph() {
 
           {/* Node 1 -> Node 2 */}
           <path
-            d="M 190 195 C 210 195, 210 195, 230 195"
+            d="M 200 215 L 220 215"
             fill="none"
             stroke={nodes[0].status === "completed" ? "#10b981" : "#475569"}
             strokeWidth="2.5"
@@ -300,7 +407,7 @@ export function AgentWorkflowGraph() {
 
           {/* Node 2 -> Node 3 */}
           <path
-            d="M 380 195 C 400 195, 400 135, 420 135"
+            d="M 380 215 C 390 215, 390 135, 400 135"
             fill="none"
             stroke={nodes[1].status === "completed" ? "#10b981" : "#475569"}
             strokeWidth="2.5"
@@ -309,70 +416,151 @@ export function AgentWorkflowGraph() {
 
           {/* Node 2 -> Node 4 */}
           <path
-            d="M 380 195 C 400 195, 400 255, 420 255"
+            d="M 380 215 C 390 215, 390 295, 400 295"
             fill="none"
             stroke={nodes[1].status === "completed" ? "#10b981" : "#475569"}
             strokeWidth="2.5"
             markerEnd={nodes[1].status === "completed" ? "url(#arrow-green)" : "url(#arrow-gray)"}
           />
 
-          {/* Node 3 -> Node 5a */}
+          {/* Node 3 -> Research Node */}
           <path
-            d="M 570 135 C 610 135, 610 95, 650 95"
+            d="M 560 135 C 570 135, 570 215, 580 215"
             fill="none"
             stroke={nodes[2].status === "completed" ? "#10b981" : "#475569"}
             strokeWidth="2"
             markerEnd={nodes[2].status === "completed" ? "url(#arrow-green)" : "url(#arrow-gray)"}
           />
 
-          {/* Node 4 -> Node 5b */}
+          {/* Node 4 -> Research Node */}
           <path
-            d="M 570 255 C 610 255, 610 195, 650 195"
+            d="M 560 295 C 570 295, 570 215, 580 215"
             fill="none"
             stroke={nodes[3].status === "completed" ? "#10b981" : nodes[3].status === "current" ? "#3b82f6" : "#475569"}
             strokeWidth="2.5"
             markerEnd={nodes[3].status === "completed" ? "url(#arrow-green)" : nodes[3].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
           />
 
-          {/* Node 4 -> Node 5c */}
+          {/* Research -> Script */}
           <path
-            d="M 570 255 C 610 255, 610 295, 650 295"
+            d="M 740 215 L 760 215"
             fill="none"
-            stroke={nodes[3].status === "completed" ? "#10b981" : nodes[3].status === "current" ? "#3b82f6" : "#475569"}
-            strokeWidth="2"
-            markerEnd={nodes[3].status === "completed" ? "url(#arrow-green)" : nodes[3].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
-          />
-
-          {/* Node 5a -> Node 6 */}
-          <path
-            d="M 800 95 C 840 95, 840 195, 880 195"
-            fill="none"
-            stroke={nodes[4].status === "completed" ? "#10b981" : "#475569"}
-            strokeWidth="2"
-            markerEnd={nodes[4].status === "completed" ? "url(#arrow-green)" : "url(#arrow-gray)"}
-          />
-
-          {/* Node 5b -> Node 6 */}
-          <path
-            d="M 800 195 C 840 195, 840 195, 880 195"
-            fill="none"
-            stroke={nodes[5].status === "completed" ? "#10b981" : "#475569"}
+            stroke={nodes[4].status === "completed" ? "#10b981" : nodes[4].status === "current" ? "#3b82f6" : "#475569"}
             strokeWidth="2.5"
-            markerEnd={nodes[5].status === "completed" ? "url(#arrow-green)" : "url(#arrow-gray)"}
+            markerEnd={nodes[4].status === "completed" ? "url(#arrow-green)" : nodes[4].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
           />
 
-          {/* Node 5c -> Node 6 */}
+          {/* Script -> Image Agent */}
           <path
-            d="M 800 295 C 840 295, 840 195, 880 195"
+            d="M 920 215 C 930 215, 930 95, 940 95"
             fill="none"
-            stroke={nodes[6].status === "completed" ? "#10b981" : "#475569"}
+            stroke={nodes[5].status === "completed" ? "#10b981" : nodes[5].status === "current" ? "#3b82f6" : "#475569"}
             strokeWidth="2"
-            markerEnd={nodes[6].status === "completed" ? "url(#arrow-green)" : "url(#arrow-gray)"}
+            markerEnd={nodes[5].status === "completed" ? "url(#arrow-green)" : nodes[5].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Script -> Voice Agent */}
+          <path
+            d="M 920 215 L 940 215"
+            fill="none"
+            stroke={nodes[5].status === "completed" ? "#10b981" : nodes[5].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2.5"
+            markerEnd={nodes[5].status === "completed" ? "url(#arrow-green)" : nodes[5].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Script -> Music Agent */}
+          <path
+            d="M 920 215 C 930 215, 930 335, 940 335"
+            fill="none"
+            stroke={nodes[5].status === "completed" ? "#10b981" : nodes[5].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2"
+            markerEnd={nodes[5].status === "completed" ? "url(#arrow-green)" : nodes[5].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Image Agent -> Subtitle Agent */}
+          <path
+            d="M 1100 95 L 1120 95"
+            fill="none"
+            stroke={nodes[6].status === "completed" ? "#10b981" : nodes[6].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2"
+            markerEnd={nodes[6].status === "completed" ? "url(#arrow-green)" : nodes[6].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Voice Agent -> Video Compositor */}
+          <path
+            d="M 1100 215 L 1120 215"
+            fill="none"
+            stroke={nodes[7].status === "completed" ? "#10b981" : nodes[7].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2.5"
+            markerEnd={nodes[7].status === "completed" ? "url(#arrow-green)" : nodes[7].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Music Agent -> Thumbnail Agent */}
+          <path
+            d="M 1100 335 L 1120 335"
+            fill="none"
+            stroke={nodes[8].status === "completed" ? "#10b981" : nodes[8].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2"
+            markerEnd={nodes[8].status === "completed" ? "url(#arrow-green)" : nodes[8].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Subtitle Agent -> Quality QA */}
+          <path
+            d="M 1280 95 C 1290 95, 1290 215, 1300 215"
+            fill="none"
+            stroke={nodes[9].status === "completed" ? "#10b981" : nodes[9].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2"
+            markerEnd={nodes[9].status === "completed" ? "url(#arrow-green)" : nodes[9].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Video Compositor -> Quality QA */}
+          <path
+            d="M 1280 215 L 1300 215"
+            fill="none"
+            stroke={nodes[10].status === "completed" ? "#10b981" : nodes[10].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2.5"
+            markerEnd={nodes[10].status === "completed" ? "url(#arrow-green)" : nodes[10].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Thumbnail Agent -> Quality QA */}
+          <path
+            d="M 1280 335 C 1290 335, 1290 215, 1300 215"
+            fill="none"
+            stroke={nodes[11].status === "completed" ? "#10b981" : nodes[11].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2"
+            markerEnd={nodes[11].status === "completed" ? "url(#arrow-green)" : nodes[11].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Quality QA -> Marketing Engine */}
+          <path
+            d="M 1460 215 L 1480 215"
+            fill="none"
+            stroke={nodes[12].status === "completed" ? "#10b981" : nodes[12].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2.5"
+            markerEnd={nodes[12].status === "completed" ? "url(#arrow-green)" : nodes[12].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Marketing Engine -> YouTube */}
+          <path
+            d="M 1640 215 C 1650 215, 1650 135, 1660 135"
+            fill="none"
+            stroke={nodes[13].status === "completed" ? "#10b981" : nodes[13].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2"
+            markerEnd={nodes[13].status === "completed" ? "url(#arrow-green)" : nodes[13].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
+          />
+
+          {/* Marketing Engine -> Instagram */}
+          <path
+            d="M 1640 215 C 1650 215, 1650 295, 1660 295"
+            fill="none"
+            stroke={nodes[13].status === "completed" ? "#10b981" : nodes[13].status === "current" ? "#3b82f6" : "#475569"}
+            strokeWidth="2"
+            markerEnd={nodes[13].status === "completed" ? "url(#arrow-green)" : nodes[13].status === "current" ? "url(#arrow-blue)" : "url(#arrow-gray)"}
           />
         </svg>
 
         {/* Canvas Nodes Layer */}
-        <div className="relative min-w-[1050px] h-[350px]">
+        <div className="relative min-w-[1850px] h-[350px]">
           {nodes.map((node) => {
             const isCompleted = node.status === "completed";
             const isCurrent = node.status === "current";
@@ -381,7 +569,7 @@ export function AgentWorkflowGraph() {
               <div
                 key={node.id}
                 style={{ left: `${node.x}px`, top: `${node.y - 35}px` }}
-                className={`absolute w-38 p-3 rounded-xl border transition-all duration-500 shadow-2xl flex flex-col justify-between ${
+                className={`absolute w-[160px] p-3 rounded-xl border transition-all duration-500 shadow-2xl flex flex-col justify-between ${
                   isCompleted
                     ? "bg-slate-900/95 border-emerald-500 text-emerald-100 shadow-emerald-500/10"
                     : isCurrent
@@ -409,7 +597,7 @@ export function AgentWorkflowGraph() {
                     {renderIcon(node.iconName, isCompleted, isCurrent)}
                   </div>
                   <div className="overflow-hidden">
-                    <h3 className={`text-xs font-bold truncate ${isCompleted ? "text-emerald-300" : isCurrent ? "text-blue-200" : "text-slate-200"}`}>
+                    <h3 className={`text-[11px] font-bold truncate ${isCompleted ? "text-emerald-300" : isCurrent ? "text-blue-200" : "text-slate-200"}`}>
                       {node.name}
                     </h3>
                     <p className="text-[9px] text-slate-400 truncate">{node.sub}</p>

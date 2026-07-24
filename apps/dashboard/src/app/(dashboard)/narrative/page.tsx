@@ -8,7 +8,7 @@ export default function NarrativeIntelligencePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8000/v1/narrative/universes")
+    fetch("/api/v1/narrative/universes")
       .then((res) => res.json())
       .then((data) => {
         if (data && data.length > 0) {

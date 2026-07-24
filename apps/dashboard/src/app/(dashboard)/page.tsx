@@ -47,7 +47,7 @@ export default function DashboardHome() {
 
   useEffect(() => {
     // 1. Fetch Real Finance Health
-    fetch("http://localhost:8000/v1/finance/health")
+    fetch("/api/v1/finance/health")
       .then((res) => res.json())
       .then((data) => {
         if (data && data.allocated_budget_usd) {
@@ -62,7 +62,7 @@ export default function DashboardHome() {
       .catch(() => {});
 
     // 2. Fetch Real Universes
-    fetch("http://localhost:8000/v1/narrative/universes")
+    fetch("/api/v1/narrative/universes")
       .then((res) => res.json())
       .then((data) => {
         if (data && data.length > 0) {
@@ -78,7 +78,7 @@ export default function DashboardHome() {
           setUniversesList(mapped);
 
           // Fetch characters for first universe
-          fetch(`http://localhost:8000/v1/narrative/universes/${data[0].id}/characters`)
+          fetch(`/api/v1/narrative/universes/${data[0].id}/characters`)
             .then((cRes) => cRes.json())
             .then((cData) => {
               if (cData && cData.length > 0) {

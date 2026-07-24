@@ -13,11 +13,11 @@ export default function RevenueEnginePage() {
 
     // Fetch master universe ID first
     try {
-      const uRes = await fetch("http://localhost:8000/v1/narrative/universes");
+      const uRes = await fetch("/api/v1/narrative/universes");
       const uData = await uRes.json();
       const uId = uData && uData.length > 0 ? uData[0].id : "00000000-0000-0000-0000-000000000000";
 
-      const res = await fetch("http://localhost:8000/v1/revenue/execute-cycle", {
+      const res = await fetch("/api/v1/revenue/execute-cycle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

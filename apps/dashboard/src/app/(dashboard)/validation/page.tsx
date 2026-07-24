@@ -120,7 +120,7 @@ export default function ValidationDashboard() {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch("http://localhost:8000/v1/validation/status");
+      const res = await fetch("/api/v1/validation/status");
       if (res.ok) {
         const json = await res.json();
         setData(json);
@@ -141,7 +141,7 @@ export default function ValidationDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("http://localhost:8000/v1/validation/run", {
+      const res = await fetch("/api/v1/validation/run", {
         method: "POST"
       });
       if (res.ok) {

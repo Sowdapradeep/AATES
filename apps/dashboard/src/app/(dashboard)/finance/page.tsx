@@ -8,7 +8,7 @@ export default function FinancialGovernorPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8000/v1/finance/health")
+    fetch("/api/v1/finance/health")
       .then((res) => res.json())
       .then((data) => {
         setHealth(data);

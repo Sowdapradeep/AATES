@@ -132,6 +132,7 @@ export default function DashboardLayout({
                   <Link
                     key={item.name}
                     href={item.href}
+                    prefetch={false}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                       isActive
                         ? "bg-gradient-to-r from-violet-600/20 to-pink-500/10 border border-violet-500/20 text-violet-300 shadow-sm"
@@ -158,6 +159,7 @@ export default function DashboardLayout({
                   <Link
                     key={item.name}
                     href={item.href}
+                    prefetch={false}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                       isActive
                         ? "bg-gradient-to-r from-violet-600/20 to-pink-500/10 border border-violet-500/20 text-violet-300 shadow-sm"

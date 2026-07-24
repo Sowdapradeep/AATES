@@ -181,7 +181,7 @@ class RevenueGenerationEngine:
                 "qXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTQuNjMuMTA0"
             )
             with open(video_path, "wb") as f:
-                f.write(base64.b64decode(minimal_mp4_b64))
+                f.write(base64.b64decode(minimal_mp4_b64 + '=' * (-len(minimal_mp4_b64) % 4)))
             logger.info(f"Created a valid minimal preview MP4 file at: {video_path}")
 
         yt_publisher = publishing_registry.get_provider("youtube")

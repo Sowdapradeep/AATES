@@ -22,6 +22,17 @@ import asyncio
 import webbrowser
 import logging
 from datetime import datetime, timezone
+
+# Load .env file manually to populate environment variables for boto3
+env_path = ".env"
+if os.path.exists(env_path):
+    with open(env_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, val = line.split("=", 1)
+                os.environ[key.strip()] = val.strip()
+
 import httpx
 import boto3
 from botocore.exceptions import ClientError

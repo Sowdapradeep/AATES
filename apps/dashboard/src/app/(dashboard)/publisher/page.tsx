@@ -158,9 +158,9 @@ export default function PublisherPage() {
       setLoading(true);
       // Fetch status, metrics, and jobs in parallel
       const [statusRes, metricsRes, jobsRes] = await Promise.all([
-        fetch("http://localhost:8000/v1/publishing/status").catch(() => null),
-        fetch("http://localhost:8000/v1/publishing/metrics").catch(() => null),
-        fetch("http://localhost:8000/v1/publishing/jobs").catch(() => null)
+        fetch("/api/v1/publishing/status").catch(() => null),
+        fetch("/api/v1/publishing/metrics").catch(() => null),
+        fetch("/api/v1/publishing/jobs").catch(() => null)
       ]);
 
       if (statusRes && statusRes.ok) {
@@ -183,7 +183,7 @@ export default function PublisherPage() {
     try {
       setVerifyingYt(true);
       setYtVerifyResult(null);
-      const res = await fetch("http://localhost:8000/v1/publishing/verify/youtube", { method: "POST" });
+      const res = await fetch("/api/v1/publishing/verify/youtube", { method: "POST" });
       if (res.ok) {
         const json = await res.json();
         setYtVerifyResult(json);
@@ -202,7 +202,7 @@ export default function PublisherPage() {
     try {
       setVerifyingIg(true);
       setIgVerifyResult(null);
-      const res = await fetch("http://localhost:8000/v1/publishing/verify/instagram", { method: "POST" });
+      const res = await fetch("/api/v1/publishing/verify/instagram", { method: "POST" });
       if (res.ok) {
         const json = await res.json();
         setIgVerifyResult(json);
@@ -220,9 +220,9 @@ export default function PublisherPage() {
   const fetchStatusAndMetricsOnly = async () => {
     try {
       const [statusRes, metricsRes, jobsRes] = await Promise.all([
-        fetch("http://localhost:8000/v1/publishing/status").catch(() => null),
-        fetch("http://localhost:8000/v1/publishing/metrics").catch(() => null),
-        fetch("http://localhost:8000/v1/publishing/jobs").catch(() => null)
+        fetch("/api/v1/publishing/status").catch(() => null),
+        fetch("/api/v1/publishing/metrics").catch(() => null),
+        fetch("/api/v1/publishing/jobs").catch(() => null)
       ]);
       if (statusRes && statusRes.ok) setStatusData(await statusRes.json());
       if (metricsRes && metricsRes.ok) setMetrics(await metricsRes.json());
@@ -234,7 +234,7 @@ export default function PublisherPage() {
 
   const handleRetryJob = async (jobId: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/v1/publishing/jobs/${jobId}/retry`, { method: "POST" });
+      const res = await fetch(`/api/v1/publishing/jobs/${jobId}/retry`, { method: "POST" });
       if (res.ok) {
         fetchStatusAndMetricsOnly();
       } else {
@@ -248,7 +248,7 @@ export default function PublisherPage() {
 
   const handleCancelJob = async (jobId: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/v1/publishing/jobs/${jobId}/cancel`, { method: "POST" });
+      const res = await fetch(`/api/v1/publishing/jobs/${jobId}/cancel`, { method: "POST" });
       if (res.ok) {
         fetchStatusAndMetricsOnly();
       } else {
@@ -262,7 +262,7 @@ export default function PublisherPage() {
 
   const handleDeleteJob = async (jobId: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/v1/publishing/jobs/${jobId}`, { method: "DELETE" });
+      const res = await fetch(`/api/v1/publishing/jobs/${jobId}`, { method: "DELETE" });
       if (res.ok) {
         fetchStatusAndMetricsOnly();
       } else {
