@@ -13,7 +13,7 @@ class DynamicProviderRegistry(dict):
     def get(self, key, default=None):
         if key in self:
             return self[key]
-        if key == "youtube_short":
+        if key in ("youtube_short", "youtube_video"):
             if settings.publishing.youtube_enabled and settings.publishing.youtube_refresh_token:
                 return YouTubePublisher()
             return MockYouTubePublisher()

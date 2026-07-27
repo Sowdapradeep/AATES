@@ -15,6 +15,13 @@ import httpx
 
 from core.config.settings import settings
 from providers.publishing.interface import PublishProvider
+from providers.publishing.utils import (
+    ensure_local_file,
+    get_video_duration,
+    split_video_to_chunks,
+    parse_episode_number,
+    clean_title_for_part
+)
 
 logger = logging.getLogger("aros.publishing.youtube")
 
@@ -157,9 +164,33 @@ class YouTubePublisher(PublishProvider):
         metadata: dict[str, Any]
     ) -> dict[str, Any]:
         """Upload video to YouTube."""
-        # 1. Check dry run
+        # 1. Ensure the file is local first
+        local_path, is_temp = ensure_local_file(master_reel_path)
+        duration = get_video_duration(local_path)
+        platform = metadata.get("platform", "youtube_short")
+
+        # Check dry run
         if metadata.get("dry_run") or os.getenv("AATES_DRY_RUN") == "True":
             logger.info("Dry-run upload to YouTube requested.")
+            if is_temp and os.path.exists(local_path):
+                try:
+                    os.remove(local_path)
+                except Exception:
+                    pass
+            if platform == "youtube_short" and duration > 60.0:
+                num_chunks = int(duration // 55.0) + (1 if duration % 55.0 > 0 else 0)
+                uploaded_ids = [f"dry_run_video_id_{i+1}" for i in range(num_chunks)]
+                video_ids_str = ",".join(uploaded_ids)
+                return {
+                    "external_post_id": video_ids_str,
+                    "status": "success",
+                    "error_message": None,
+                    "provider": "YouTubePublisher",
+                    "upload_id": "dry_run_upload_id",
+                    "video_id": video_ids_str,
+                    "url": f"https://www.youtube.com/watch?v={uploaded_ids[0]}",
+                    "processing_status": "dry_run"
+                }
             return {
                 "external_post_id": "dry_run_yt_id",
                 "status": "success",
@@ -171,165 +202,323 @@ class YouTubePublisher(PublishProvider):
                 "processing_status": "dry_run"
             }
 
-        if not os.path.exists(master_reel_path):
-            raise FileNotFoundError(f"Video file not found at: {master_reel_path}")
+        try:
+            token = await self._get_access_token()
 
-        file_size = os.path.getsize(master_reel_path)
-        logger.info(f"Upload Started: File={os.path.basename(master_reel_path)}, size={file_size} bytes")
-        start_time = time.monotonic()
+            title = metadata.get("title", f"AATES Production {int(time.time())}")
+            description = caption or metadata.get("description", "Produced by AATES autonomous studio.")
+            tags = metadata.get("tags", ["Tamil", "AATES", "AI"])
+            category_id = metadata.get("categoryId", "22")  # People & Blogs
+            language = metadata.get("language", "ta")
 
-        token = await self._get_access_token()
+            # Privacy status
+            privacy = metadata.get("privacy", "public")
+            if metadata.get("safe_production_mode", False) or os.getenv("AATES_SAFE_MODE") == "True":
+                privacy = "private"  # Override to private in safe mode
 
-        title = metadata.get("title", f"AATES Production {int(time.time())}")
-        title = title[:100]  # YouTube shorts title max 100 chars
+            # Schedule publishing if requested
+            publish_at = metadata.get("publish_at")
 
-        description = caption or metadata.get("description", "Produced by AATES autonomous studio.")
-        tags = metadata.get("tags", ["Tamil", "AATES", "AI"])
-        category_id = metadata.get("categoryId", "22")  # People & Blogs
-        language = metadata.get("language", "ta")
+            # Determine if we should split the video
+            if platform == "youtube_short" and duration > 60.0:
+                chunks = split_video_to_chunks(local_path, chunk_duration_sec=55.0)
+                uploaded_ids = []
+                last_upload_url = None
+                
+                try:
+                    for idx, chunk_file in enumerate(chunks):
+                        part_idx = idx + 1
+                        episode_num = parse_episode_number(title)
+                        clean_title = clean_title_for_part(title)
+                        # Format: Episode X - Segment X.Y - [Title]
+                        part_title = f"Episode {episode_num} - Segment {episode_num}.{part_idx} - {clean_title}"
+                        part_title = part_title[:100]  # YouTube Shorts title limit
+                        
+                        chunk_size = os.path.getsize(chunk_file)
+                        logger.info(f"Uploading segment {part_title} ({chunk_size} bytes)...")
+                        
+                        # Snippet & status
+                        snippet = {
+                            "title": part_title,
+                            "description": description,
+                            "tags": tags,
+                            "categoryId": category_id,
+                            "defaultLanguage": language,
+                            "defaultAudioLanguage": language
+                        }
+                        status = {
+                            "privacyStatus": privacy,
+                            "selfDeclaredMadeForKids": False
+                        }
+                        if publish_at:
+                            status["publishAt"] = publish_at
+                            status["privacyStatus"] = "private"
 
-        # Privacy status
-        privacy = metadata.get("privacy", "public")
-        if metadata.get("safe_production_mode", False) or os.getenv("AATES_SAFE_MODE") == "True":
-            privacy = "private"  # Override to private in safe mode
+                        body = {
+                            "snippet": snippet,
+                            "status": status
+                        }
 
-        # Schedule publishing if requested
-        publish_at = metadata.get("publish_at")
+                        # 2. Initiate Resumable Upload Session
+                        init_res = await self._request_with_retry(
+                            "POST",
+                            "https://www.googleapis.com/upload/youtube/v3/videos",
+                            headers={
+                                "Authorization": f"Bearer {token}",
+                                "Content-Type": "application/json; charset=UTF-8",
+                                "X-Upload-Content-Length": str(chunk_size),
+                                "X-Upload-Content-Type": "video/*"
+                            },
+                            params={"uploadType": "resumable", "part": "snippet,status"},
+                            json_data=body,
+                            timeout=30.0
+                        )
 
-        # Define snippet & status
-        snippet = {
-            "title": title,
-            "description": description,
-            "tags": tags,
-            "categoryId": category_id,
-            "defaultLanguage": language,
-            "defaultAudioLanguage": language
-        }
-        status = {
-            "privacyStatus": privacy,
-            "selfDeclaredMadeForKids": False
-        }
+                        if init_res.status_code != 200:
+                            raise ValueError(f"Failed to initiate resumable upload session for chunk {part_idx}: {init_res.text}")
 
-        if publish_at:
-            status["publishAt"] = publish_at
-            status["privacyStatus"] = "private"
+                        upload_url = init_res.headers.get("Location")
+                        if not upload_url:
+                            raise ValueError("Location header missing")
 
-        body = {
-            "snippet": snippet,
-            "status": status
-        }
+                        # 3. Stream Video Content
+                        with open(chunk_file, "rb") as f:
+                            video_bytes = f.read()
 
-        # 2. Initiate Resumable Upload Session
-        init_res = await self._request_with_retry(
-            "POST",
-            "https://www.googleapis.com/upload/youtube/v3/videos",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json; charset=UTF-8",
-                "X-Upload-Content-Length": str(file_size),
-                "X-Upload-Content-Type": "video/*"
-            },
-            params={"uploadType": "resumable", "part": "snippet,status"},
-            json_data=body,
-            timeout=30.0
-        )
+                        upload_res = await self._request_with_retry(
+                            "PUT",
+                            upload_url,
+                            headers={
+                                "Content-Length": str(chunk_size),
+                                "Content-Type": "video/*"
+                            },
+                            content=video_bytes,
+                            timeout=600.0
+                        )
 
-        if init_res.status_code != 200:
-            raise ValueError(f"Failed to initiate resumable upload session: {init_res.text}")
+                        if upload_res.status_code not in (200, 201):
+                            raise ValueError(f"Failed to upload segment content: {upload_res.text}")
 
-        upload_url = init_res.headers.get("Location")
-        if not upload_url:
-            raise ValueError("Location header missing in resumable upload initiation response")
+                        video_id = upload_res.json().get("id")
+                        uploaded_ids.append(video_id)
+                        last_upload_url = upload_url
 
-        # 3. Stream Video Content
-        with open(master_reel_path, "rb") as f:
-            video_bytes = f.read()
+                        # Upload thumbnail & subtitles if provided (optional, fallback if fails)
+                        thumbnail_path = metadata.get("thumbnail_path")
+                        if thumbnail_path and os.path.exists(thumbnail_path):
+                            try:
+                                with open(thumbnail_path, "rb") as thumb_f:
+                                    thumb_data = thumb_f.read()
+                                await self._request_with_retry(
+                                    "POST",
+                                    "https://www.googleapis.com/upload/youtube/v3/thumbnails/set",
+                                    headers={
+                                        "Authorization": f"Bearer {token}",
+                                        "Content-Type": "image/jpeg"
+                                    },
+                                    params={"videoId": video_id},
+                                    content=thumb_data,
+                                    timeout=60.0
+                                )
+                            except Exception as thumb_err:
+                                logger.warning(f"Failed to upload thumbnail for chunk {part_idx}: {thumb_err}")
 
-        upload_res = await self._request_with_retry(
-            "PUT",
-            upload_url,
-            headers={
-                "Content-Length": str(file_size),
-                "Content-Type": "video/*"
-            },
-            content=video_bytes,
-            timeout=600.0  # 10 minute timeout
-        )
+                        srt_path = metadata.get("srt_path")
+                        if srt_path and os.path.exists(srt_path):
+                            try:
+                                with open(srt_path, "rb") as srt_f:
+                                    srt_data = srt_f.read()
+                                caption_metadata = {
+                                    "snippet": {
+                                        "videoId": video_id,
+                                        "language": language,
+                                        "name": f"Tamil Subtitles Part {part_idx}",
+                                        "isDraft": False
+                                    }
+                                }
+                                files = {
+                                    "metadata": (None, json.dumps(caption_metadata), "application/json"),
+                                    "media": ("subtitles.srt", srt_data, "application/octet-stream")
+                                }
+                                await self._request_with_retry(
+                                    "POST",
+                                    "https://www.googleapis.com/upload/youtube/v3/captions",
+                                    headers={"Authorization": f"Bearer {token}"},
+                                    params={"part": "snippet"},
+                                    files=files,
+                                    timeout=60.0
+                                )
+                            except Exception as srt_err:
+                                logger.warning(f"Failed to upload subtitles for chunk {part_idx}: {srt_err}")
+                finally:
+                    # Clean up temp chunk files
+                    for p in chunks:
+                        if os.path.exists(p) and p != local_path:
+                            try:
+                                os.remove(p)
+                            except Exception:
+                                pass
 
-        if upload_res.status_code not in (200, 201):
-            raise ValueError(f"Failed to upload video content: {upload_res.text}")
+                return {
+                    "external_post_id": ",".join(uploaded_ids),
+                    "status": "success",
+                    "error_message": None,
+                    "provider": "YouTubePublisher",
+                    "upload_id": last_upload_url,
+                    "video_id": ",".join(uploaded_ids),
+                    "url": f"https://www.youtube.com/watch?v={uploaded_ids[0]}" if uploaded_ids else "",
+                    "processing_status": "uploaded"
+                }
 
-        video_data = upload_res.json()
-        video_id = video_data.get("id")
+            else:
+                # Standard single-file upload (e.g. youtube_video or video <= 60s)
+                file_size = os.path.getsize(local_path)
+                logger.info(f"Upload Started (Single): File={os.path.basename(local_path)}, size={file_size} bytes")
+                start_time_up = time.monotonic()
 
-        upload_duration = time.monotonic() - start_time
-        logger.info(f"Upload Finished. Video ID: {video_id}")
-        logger.info(f"Upload Duration: {upload_duration:.2f} seconds")
+                # Clean up title for single video if needed
+                clean_title = title[:100]
 
-        # 4. Upload Thumbnail if provided
-        thumbnail_path = metadata.get("thumbnail_path")
-        if thumbnail_path and os.path.exists(thumbnail_path):
-            try:
-                with open(thumbnail_path, "rb") as thumb_f:
-                    thumb_data = thumb_f.read()
-                await self._request_with_retry(
+                # Define snippet & status
+                snippet = {
+                    "title": clean_title,
+                    "description": description,
+                    "tags": tags,
+                    "categoryId": category_id,
+                    "defaultLanguage": language,
+                    "defaultAudioLanguage": language
+                }
+                status = {
+                    "privacyStatus": privacy,
+                    "selfDeclaredMadeForKids": False
+                }
+                if publish_at:
+                    status["publishAt"] = publish_at
+                    status["privacyStatus"] = "private"
+
+                body = {
+                    "snippet": snippet,
+                    "status": status
+                }
+
+                # 2. Initiate Resumable Upload Session
+                init_res = await self._request_with_retry(
                     "POST",
-                    "https://www.googleapis.com/upload/youtube/v3/thumbnails/set",
+                    "https://www.googleapis.com/upload/youtube/v3/videos",
                     headers={
                         "Authorization": f"Bearer {token}",
-                        "Content-Type": "image/jpeg"
+                        "Content-Type": "application/json; charset=UTF-8",
+                        "X-Upload-Content-Length": str(file_size),
+                        "X-Upload-Content-Type": "video/*"
                     },
-                    params={"videoId": video_id},
-                    content=thumb_data,
-                    timeout=60.0
+                    params={"uploadType": "resumable", "part": "snippet,status"},
+                    json_data=body,
+                    timeout=30.0
                 )
-                logger.info(f"Successfully set thumbnail for video {video_id}")
-            except Exception as thumb_err:
-                logger.warning(f"Failed to upload thumbnail: {thumb_err}")
 
-        # 5. Upload Subtitles if provided
-        srt_path = metadata.get("srt_path")
-        if srt_path and os.path.exists(srt_path):
-            try:
-                with open(srt_path, "rb") as srt_f:
-                    srt_data = srt_f.read()
-                
-                caption_metadata = {
-                    "snippet": {
-                        "videoId": video_id,
-                        "language": language,
-                        "name": "Tamil Subtitles",
-                        "isDraft": False
-                    }
-                }
-                
-                files = {
-                    "metadata": (None, json.dumps(caption_metadata), "application/json"),
-                    "media": ("subtitles.srt", srt_data, "application/octet-stream")
-                }
-                
-                await self._request_with_retry(
-                    "POST",
-                    "https://www.googleapis.com/upload/youtube/v3/captions",
-                    headers={"Authorization": f"Bearer {token}"},
-                    params={"part": "snippet"},
-                    files=files,
-                    timeout=60.0
+                if init_res.status_code != 200:
+                    raise ValueError(f"Failed to initiate resumable upload session: {init_res.text}")
+
+                upload_url = init_res.headers.get("Location")
+                if not upload_url:
+                    raise ValueError("Location header missing in resumable upload initiation response")
+
+                # 3. Stream Video Content
+                with open(local_path, "rb") as f:
+                    video_bytes = f.read()
+
+                upload_res = await self._request_with_retry(
+                    "PUT",
+                    upload_url,
+                    headers={
+                        "Content-Length": str(file_size),
+                        "Content-Type": "video/*"
+                    },
+                    content=video_bytes,
+                    timeout=600.0  # 10 minute timeout
                 )
-                logger.info(f"Successfully uploaded subtitles for video {video_id}")
-            except Exception as srt_err:
-                logger.warning(f"Failed to upload subtitles: {srt_err}")
 
-        return {
-            "external_post_id": video_id,
-            "status": "success",
-            "error_message": None,
-            "provider": "YouTubePublisher",
-            "upload_id": upload_url,
-            "video_id": video_id,
-            "url": f"https://www.youtube.com/watch?v={video_id}",
-            "processing_status": "uploaded"
-        }
+                if upload_res.status_code not in (200, 201):
+                    raise ValueError(f"Failed to upload video content: {upload_res.text}")
+
+                video_data = upload_res.json()
+                video_id = video_data.get("id")
+
+                upload_duration = time.monotonic() - start_time_up
+                logger.info(f"Upload Finished. Video ID: {video_id}")
+                logger.info(f"Upload Duration: {upload_duration:.2f} seconds")
+
+                # 4. Upload Thumbnail if provided
+                thumbnail_path = metadata.get("thumbnail_path")
+                if thumbnail_path and os.path.exists(thumbnail_path):
+                    try:
+                        with open(thumbnail_path, "rb") as thumb_f:
+                            thumb_data = thumb_f.read()
+                        await self._request_with_retry(
+                            "POST",
+                            "https://www.googleapis.com/upload/youtube/v3/thumbnails/set",
+                            headers={
+                                "Authorization": f"Bearer {token}",
+                                "Content-Type": "image/jpeg"
+                            },
+                            params={"videoId": video_id},
+                            content=thumb_data,
+                            timeout=60.0
+                        )
+                        logger.info(f"Successfully set thumbnail for video {video_id}")
+                    except Exception as thumb_err:
+                        logger.warning(f"Failed to upload thumbnail: {thumb_err}")
+
+                # 5. Upload Subtitles if provided
+                srt_path = metadata.get("srt_path")
+                if srt_path and os.path.exists(srt_path):
+                    try:
+                        with open(srt_path, "rb") as srt_f:
+                            srt_data = srt_f.read()
+                        
+                        caption_metadata = {
+                            "snippet": {
+                                "videoId": video_id,
+                                "language": language,
+                                "name": "Tamil Subtitles",
+                                "isDraft": False
+                            }
+                        }
+                        
+                        files = {
+                            "metadata": (None, json.dumps(caption_metadata), "application/json"),
+                            "media": ("subtitles.srt", srt_data, "application/octet-stream")
+                        }
+                        
+                        await self._request_with_retry(
+                            "POST",
+                            "https://www.googleapis.com/upload/youtube/v3/captions",
+                            headers={"Authorization": f"Bearer {token}"},
+                            params={"part": "snippet"},
+                            files=files,
+                            timeout=60.0
+                        )
+                        logger.info(f"Successfully uploaded subtitles for video {video_id}")
+                    except Exception as srt_err:
+                        logger.warning(f"Failed to upload subtitles: {srt_err}")
+
+                return {
+                    "external_post_id": video_id,
+                    "status": "success",
+                    "error_message": None,
+                    "provider": "YouTubePublisher",
+                    "upload_id": upload_url,
+                    "video_id": video_id,
+                    "url": f"https://www.youtube.com/watch?v={video_id}",
+                    "processing_status": "uploaded"
+                }
+
+        finally:
+            if is_temp and os.path.exists(local_path):
+                try:
+                    os.remove(local_path)
+                except Exception:
+                    pass
 
     async def health_check(self) -> dict[str, Any]:
         """Verify YouTube API availability."""

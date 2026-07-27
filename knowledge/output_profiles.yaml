@@ -33,3 +33,21 @@ youtube_short:
   audio_loudness_target: -14.0
   video_codec: "h264"
   export_preset: "slow"
+
+youtube_video:
+  aspect_ratio: "16:9"
+  resolution: "1920x1080"
+  frame_rate: 30
+  max_duration: 1800.0
+  subtitle_style: "bold_center_white"
+  safe_text_area:
+    top: 0.1
+    bottom: 0.1
+    left: 0.1
+    right: 0.1
+  intro_duration: 3.0
+  outro_duration: 5.0
+  thumbnail_frame_strategy: "first_frame"
+  audio_loudness_target: -14.0
+  video_codec: "h264"
+  export_preset: "slow"

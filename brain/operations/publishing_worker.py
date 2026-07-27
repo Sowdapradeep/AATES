@@ -140,6 +140,9 @@ async def process_job(db: Session, job: PublishingJob):
     payload = job.payload or {}
     master_reel_path = payload.get("master_reel_path", "")
     caption = payload.get("caption", "")
+    
+    # Ensure platform parameter is available in metadata for splitting logic
+    payload["platform"] = job.provider
 
     start_time = time.monotonic()
     try:

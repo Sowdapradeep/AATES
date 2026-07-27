@@ -8,6 +8,13 @@ import httpx
 from core.config.settings import settings
 from providers.publishing.interface import PublishProvider
 from providers.publishing.platform_profile import platform_registry, PlatformProfile
+from providers.publishing.utils import (
+    ensure_local_file,
+    get_video_duration,
+    split_video_to_chunks,
+    parse_episode_number,
+    clean_title_for_part
+)
 
 logger = logging.getLogger("instagram_publishing_provider")
 
@@ -76,10 +83,29 @@ class InstagramPublishingProvider(PublishProvider):
         """Phase 13 legacy & direct upload bridge for Instagram Reels."""
         is_testing = (settings.app.env == "testing") or (os.getenv("APP__ENV") == "testing")
         
-        if not os.path.exists(master_reel_path) and not master_reel_path.startswith("s3://") and not is_testing:
-            raise FileNotFoundError(f"Reel file not found: {master_reel_path}")
+        # 1. Ensure local file
+        local_path, is_temp = ensure_local_file(master_reel_path)
+        duration = get_video_duration(local_path)
+        platform = metadata.get("platform", "instagram_reel")
 
-        if (metadata and metadata.get("dry_run")) or not settings.publishing.instagram_access_token:
+        # Check dry run
+        if (metadata and metadata.get("dry_run")) or not settings.publishing.instagram_access_token or settings.publishing.instagram_access_token == "mock":
+            if is_temp and os.path.exists(local_path):
+                try:
+                    os.remove(local_path)
+                except Exception:
+                    pass
+            if platform == "instagram_reel" and duration > 60.0:
+                num_chunks = int(duration // 55.0) + (1 if duration % 55.0 > 0 else 0)
+                uploaded_ids = [f"mock_ig_{uuid.uuid4().hex[:6]}" for _ in range(num_chunks)]
+                video_ids_str = ",".join(uploaded_ids)
+                return {
+                    "status": "success",
+                    "external_post_id": video_ids_str,
+                    "processing_status": "FINISHED",
+                    "video_id": video_ids_str,
+                    "provider": self.name
+                }
             return {
                 "status": "success",
                 "external_post_id": f"mock_ig_{uuid.uuid4().hex[:6]}",
@@ -91,114 +117,227 @@ class InstagramPublishingProvider(PublishProvider):
         access_token = settings.publishing.instagram_access_token
         ig_user_id = settings.publishing.instagram_business_account_id
 
-        if not access_token or not ig_user_id:
-            val = await self.validate_media(master_reel_path, "instagram_reels")
-            cap = {"caption": caption, "hashtags": [], "alt_text": ""}
-            up = await self.upload_media(val, cap)
-            pub = await self.publish(up["container_id"])
-            return {
-                "status": "success",
-                "external_post_id": pub["instagram_media_id"],
-                "publish_id": pub["instagram_media_id"],
-                "permalink": pub["permalink"],
-                "error_message": None,
-                "provider": self.name
-            }
-
-        bucket = settings.aws.s3_bucket
-        if master_reel_path.startswith("s3://"):
-            parts = master_reel_path[5:].split("/", 1)
-            bucket = parts[0]
-            key = parts[1]
-        else:
-            key = f"reels/{os.path.basename(master_reel_path)}"
+        if not access_token or not ig_user_id or access_token == "mock" or ig_user_id == "mock":
+            # Direct/mock flow when credentials are not fully set up
             try:
-                import boto3
-                session = boto3.Session()
-                s3_client = session.client("s3", region_name=settings.aws.region)
-                logger.info(f"Uploading local file {master_reel_path} to S3 bucket {bucket} at {key}...")
-                s3_client.upload_file(master_reel_path, bucket, key)
-            except Exception as e:
-                logger.error(f"Failed to upload video to S3 for Instagram publishing: {e}")
-                raise
-
-        try:
-            import boto3
-            from botocore.client import Config
-            session = boto3.Session()
-            s3_client = session.client(
-                "s3",
-                region_name=settings.aws.region,
-                config=Config(signature_version="s3v4")
-            )
-            video_url = s3_client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": bucket, "Key": key},
-                ExpiresIn=3600
-            )
-            logger.info(f"Generated S3 pre-signed URL for Instagram: {video_url}")
-        except Exception as e:
-            logger.error(f"Failed to generate S3 pre-signed URL for Instagram: {e}")
-            raise
-
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            # 1. Container creation
-            post_url = f"https://graph.facebook.com/{self.api_version}/{ig_user_id}/media"
-            res = await client.post(post_url, data={
-                "media_type": "REELS",
-                "video_url": video_url,
-                "caption": caption,
-                "access_token": access_token
-            })
-            container_id = res.json().get("id")
-
-            if metadata and metadata.get("safe_production_mode"):
+                val = await self.validate_media(local_path, "instagram_reels")
+                cap = {"caption": caption, "hashtags": [], "alt_text": ""}
+                up = await self.upload_media(val, cap)
+                pub = await self.publish(up["container_id"])
                 return {
                     "status": "success",
-                    "external_post_id": container_id,
-                    "publish_id": None,
-                    "processing_state": "container_created",
+                    "external_post_id": pub["instagram_media_id"],
+                    "publish_id": pub["instagram_media_id"],
+                    "permalink": pub["permalink"],
+                    "error_message": None,
                     "provider": self.name
                 }
+            finally:
+                if is_temp and os.path.exists(local_path):
+                    try:
+                        os.remove(local_path)
+                    except Exception:
+                        pass
 
-            # 2. Check status (wait/poll until FINISHED)
-            status_url = f"https://graph.facebook.com/{self.api_version}/{container_id}"
-            import asyncio
-            
-            max_attempts = 15
-            for attempt in range(max_attempts):
-                status_res = await client.get(status_url, params={"fields": "status_code", "access_token": access_token})
-                status_data = status_res.json()
-                status_code = status_data.get("status_code")
-                logger.info(f"Instagram video processing status: {status_code} (attempt {attempt + 1}/{max_attempts})")
+        try:
+            # Check splitting
+            if platform == "instagram_reel" and duration > 60.0:
+                chunks = split_video_to_chunks(local_path, chunk_duration_sec=55.0)
+                uploaded_ids = []
+                permalinks = []
                 
-                if status_code == "FINISHED":
-                    break
-                elif status_code == "ERROR" or status_code == "EXPIRED":
-                    raise Exception(f"Instagram video container failed with status: {status_code}")
+                try:
+                    for idx, chunk_file in enumerate(chunks):
+                        part_idx = idx + 1
+                        episode_num = parse_episode_number(caption)
+                        clean_caption = clean_title_for_part(caption)
+                        # Format: Episode X - Segment X.Y - [Title]
+                        part_caption = f"Episode {episode_num} - Segment {episode_num}.{part_idx} - {clean_caption}"
+                        part_caption = part_caption[:2200]  # Instagram caption limit
+                        
+                        bucket = settings.aws.s3_bucket
+                        key = f"reels/segment_{episode_num}_{part_idx}_{uuid.uuid4().hex[:4]}.mp4"
+                        
+                        # Upload chunk to S3
+                        try:
+                            import boto3
+                            session = boto3.Session()
+                            s3_client = session.client("s3", region_name=settings.aws.region)
+                            logger.info(f"Uploading segment local file {chunk_file} to S3 bucket {bucket} at {key}...")
+                            s3_client.upload_file(chunk_file, bucket, key)
+                        except Exception as e:
+                            logger.error(f"Failed to upload segment to S3: {e}")
+                            raise
+                            
+                        # Generate presigned URL
+                        try:
+                            from botocore.client import Config
+                            s3_client = session.client(
+                                "s3",
+                                region_name=settings.aws.region,
+                                config=Config(signature_version="s3v4")
+                            )
+                            video_url = s3_client.generate_presigned_url(
+                                "get_object",
+                                Params={"Bucket": bucket, "Key": key},
+                                ExpiresIn=3600
+                            )
+                        except Exception as e:
+                            logger.error(f"Failed to generate segment pre-signed URL: {e}")
+                            raise
+                            
+                        # Instagram Container Creation and Ingestion
+                        async with httpx.AsyncClient(timeout=60.0) as client:
+                            post_url = f"https://graph.facebook.com/{self.api_version}/{ig_user_id}/media"
+                            res = await client.post(post_url, data={
+                                "media_type": "REELS",
+                                "video_url": video_url,
+                                "caption": part_caption,
+                                "access_token": access_token
+                            })
+                            container_id = res.json().get("id")
+                            if not container_id:
+                                raise ValueError(f"Failed to create Reels container for segment {part_idx}: {res.text}")
+                                
+                            # Poll Container Ingestion Status
+                            status_url = f"https://graph.facebook.com/{self.api_version}/{container_id}"
+                            max_attempts = 15
+                            for attempt in range(max_attempts):
+                                status_res = await client.get(status_url, params={"fields": "status_code", "access_token": access_token})
+                                status_code = status_res.json().get("status_code")
+                                if status_code == "FINISHED":
+                                    break
+                                elif status_code == "ERROR" or status_code == "EXPIRED":
+                                    raise Exception(f"Instagram segment container failed with status: {status_code}")
+                                await asyncio.sleep(5)
+                            else:
+                                raise Exception("Instagram segment container processing timed out")
+                                
+                            # Publish Container
+                            pub_url = f"https://graph.facebook.com/{self.api_version}/{ig_user_id}/media_publish"
+                            pub_res = await client.post(pub_url, data={"creation_id": container_id, "access_token": access_token})
+                            publish_id = pub_res.json().get("id")
+                            
+                            # Get Permalink
+                            perma_url = f"https://graph.facebook.com/{self.api_version}/{publish_id}"
+                            perma_res = await client.get(perma_url, params={"fields": "permalink", "access_token": access_token})
+                            permalink = perma_res.json().get("permalink", "")
+                            
+                            uploaded_ids.append(publish_id)
+                            permalinks.append(permalink)
+                            
+                finally:
+                    # Clean up split chunks
+                    for p in chunks:
+                        if os.path.exists(p) and p != local_path:
+                            try:
+                                os.remove(p)
+                            except Exception:
+                                pass
+                                
+                return {
+                    "status": "success",
+                    "external_post_id": ",".join(uploaded_ids),
+                    "publish_id": ",".join(uploaded_ids),
+                    "permalink": permalinks[0] if permalinks else "",
+                    "error_message": None,
+                    "provider": self.name
+                }
                 
-                await asyncio.sleep(5)
             else:
-                raise Exception("Instagram video container processing timed out")
-            
-            # 3. Publish container
-            pub_url = f"https://graph.facebook.com/{self.api_version}/{ig_user_id}/media_publish"
-            pub_res = await client.post(pub_url, data={"creation_id": container_id, "access_token": access_token})
-            publish_id = pub_res.json().get("id")
+                # Single video upload (duration <= 60s)
+                bucket = settings.aws.s3_bucket
+                key = f"reels/{os.path.basename(local_path)}"
+                
+                try:
+                    import boto3
+                    session = boto3.Session()
+                    s3_client = session.client("s3", region_name=settings.aws.region)
+                    logger.info(f"Uploading single local file {local_path} to S3 bucket {bucket} at {key}...")
+                    s3_client.upload_file(local_path, bucket, key)
+                except Exception as e:
+                    logger.error(f"Failed to upload video to S3 for Instagram publishing: {e}")
+                    raise
 
-            # 4. Get permalink
-            perma_url = f"https://graph.facebook.com/{self.api_version}/{publish_id}"
-            perma_res = await client.get(perma_url, params={"fields": "permalink", "access_token": access_token})
-            permalink = perma_res.json().get("permalink", "")
+                try:
+                    from botocore.client import Config
+                    s3_client = session.client(
+                        "s3",
+                        region_name=settings.aws.region,
+                        config=Config(signature_version="s3v4")
+                    )
+                    video_url = s3_client.generate_presigned_url(
+                        "get_object",
+                        Params={"Bucket": bucket, "Key": key},
+                        ExpiresIn=3600
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to generate S3 pre-signed URL: {e}")
+                    raise
 
-            return {
-                "status": "success",
-                "external_post_id": publish_id,
-                "publish_id": publish_id,
-                "permalink": permalink,
-                "error_message": None,
-                "provider": self.name
-            }
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    # 1. Container creation
+                    post_url = f"https://graph.facebook.com/{self.api_version}/{ig_user_id}/media"
+                    res = await client.post(post_url, data={
+                        "media_type": "REELS",
+                        "video_url": video_url,
+                        "caption": caption,
+                        "access_token": access_token
+                    })
+                    container_id = res.json().get("id")
+
+                    if metadata and metadata.get("safe_production_mode"):
+                        return {
+                            "status": "success",
+                            "external_post_id": container_id,
+                            "publish_id": None,
+                            "processing_state": "container_created",
+                            "provider": self.name
+                        }
+
+                    # 2. Check status (wait/poll until FINISHED)
+                    status_url = f"https://graph.facebook.com/{self.api_version}/{container_id}"
+                    max_attempts = 15
+                    for attempt in range(max_attempts):
+                        status_res = await client.get(status_url, params={"fields": "status_code", "access_token": access_token})
+                        status_data = status_res.json()
+                        status_code = status_data.get("status_code")
+                        logger.info(f"Instagram video processing status: {status_code} (attempt {attempt + 1}/{max_attempts})")
+                        
+                        if status_code == "FINISHED":
+                            break
+                        elif status_code == "ERROR" or status_code == "EXPIRED":
+                            raise Exception(f"Instagram video container failed with status: {status_code}")
+                        
+                        await asyncio.sleep(5)
+                    else:
+                        raise Exception("Instagram video container processing timed out")
+                    
+                    # 3. Publish container
+                    pub_url = f"https://graph.facebook.com/{self.api_version}/{ig_user_id}/media_publish"
+                    pub_res = await client.post(pub_url, data={"creation_id": container_id, "access_token": access_token})
+                    publish_id = pub_res.json().get("id")
+
+                    # 4. Get permalink
+                    perma_url = f"https://graph.facebook.com/{self.api_version}/{publish_id}"
+                    perma_res = await client.get(perma_url, params={"fields": "permalink", "access_token": access_token})
+                    permalink = perma_res.json().get("permalink", "")
+
+                    return {
+                        "status": "success",
+                        "external_post_id": publish_id,
+                        "publish_id": publish_id,
+                        "permalink": permalink,
+                        "error_message": None,
+                        "provider": self.name
+                    }
+
+        finally:
+            if is_temp and os.path.exists(local_path):
+                try:
+                    os.remove(local_path)
+                except Exception:
+                    pass
 
     async def get_analytics(self, media_id: str) -> dict[str, Any]:
         """Phase 13 analytics bridge."""
