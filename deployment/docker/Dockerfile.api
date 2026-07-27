@@ -13,7 +13,7 @@ FROM python:3.12-alpine AS runner
 
 WORKDIR /app
 
-RUN apk add --no-cache libpq
+RUN apk add --no-cache libpq ffmpeg
 
 COPY --from=builder /root/.local /root/.local
 COPY . .

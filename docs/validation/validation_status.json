@@ -1,11 +1,11 @@
 {
     "infrastructure": {
         "status": "PASS",
-        "latency_ms": 4.000186920166016,
+        "latency_ms": 5.878448486328125,
         "details": {
             "database": {
                 "status": "PASS",
-                "latency_ms": 4.000186920166016
+                "latency_ms": 5.878448486328125
             },
             "redis": {
                 "status": "PASS",
@@ -59,7 +59,7 @@
     },
     "operations": {
         "status": "PASS",
-        "latency_ms": 1.0027885437011719,
+        "latency_ms": 0.0,
         "details": {
             "bedrock_converse_routing": "PASS",
             "groq_fallback_routing": "PASS",
@@ -70,15 +70,15 @@
     },
     "e2e_workflow": {
         "status": "PASS",
-        "latency_ms": 0.0
+        "latency_ms": 1.3530254364013672
     },
     "performance": {
         "status": "PASS",
-        "cpu_usage_percent": 2.8,
-        "memory_used_mb": 12747.71875,
+        "cpu_usage_percent": 41.9,
+        "memory_used_mb": 15239.32421875,
         "memory_total_mb": 16077.33984375,
-        "disk_free_mb": 107599.28515625,
-        "latency_ms": 100.9211540222168
+        "disk_free_mb": 106872.19921875,
+        "latency_ms": 102.04744338989258
     },
     "security": {
         "status": "PASS",
@@ -103,8 +103,8 @@
     },
     "summary": {
         "health_score": 100,
-        "total_duration_s": 0.792747974395752,
-        "timestamp": "2026-07-24T06:54:56.823829",
+        "total_duration_s": 3.291449546813965,
+        "timestamp": "2026-07-27T03:36:13.058220",
         "platform_ready": "YES",
         "warnings": []
     }
