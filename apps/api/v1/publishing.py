@@ -415,6 +415,45 @@ async def create_publishing_job(payload: PublishingJobCreateDTO, db: Session = D
     if existing:
         return existing
 
+    scheduled_at = payload.scheduled_at
+    import datetime as dt_mod
+    if not scheduled_at:
+        scheduled_at = datetime.now(UTC).replace(tzinfo=None)
+
+    # 1. Segment Alignment: Align Reels/Shorts to the parent long-form video (youtube_video)
+    if payload.provider in ("youtube_short", "instagram_reel"):
+        main_video_job = db.query(PublishingJob).filter(
+            PublishingJob.content_id == payload.content_id,
+            PublishingJob.provider == "youtube_video",
+            PublishingJob.status.in_(["QUEUED", "PROCESSING", "SUCCESS", "RETRYING"])
+        ).first()
+        if main_video_job and main_video_job.scheduled_at:
+            scheduled_at = main_video_job.scheduled_at + dt_mod.timedelta(hours=1)
+            logger.info(f"Aligned {payload.provider} segment to main video time: {scheduled_at.isoformat()}")
+
+    # 2. Rate-Limiting: Ensure maximum of 1 youtube_video per calendar day
+    if payload.provider == "youtube_video":
+        while True:
+            start_of_day = datetime.combine(scheduled_at.date(), dt_mod.time.min)
+            end_of_day = datetime.combine(scheduled_at.date(), dt_mod.time.max)
+            
+            conflict = db.query(PublishingJob).filter(
+                PublishingJob.provider == "youtube_video",
+                PublishingJob.status.in_(["QUEUED", "PROCESSING", "SUCCESS", "RETRYING"]),
+                PublishingJob.scheduled_at >= start_of_day,
+                PublishingJob.scheduled_at <= end_of_day
+            ).first()
+            
+            if not conflict:
+                break
+                
+            scheduled_at = scheduled_at + dt_mod.timedelta(days=1)
+            logger.info(f"youtube_video conflict detected. Rescheduling slot to {scheduled_at.isoformat()}")
+
+    # Sync publish_at inside the payload dict
+    job_payload = payload.payload or {}
+    job_payload["publish_at"] = scheduled_at.isoformat()
+
     job = PublishingJob(
         id=uuid.uuid4(),
         tenant_id=payload.tenant_id,
@@ -422,8 +461,8 @@ async def create_publishing_job(payload: PublishingJobCreateDTO, db: Session = D
         provider=payload.provider,
         status="QUEUED",
         priority=payload.priority,
-        scheduled_at=payload.scheduled_at,
-        payload=payload.payload,
+        scheduled_at=scheduled_at,
+        payload=job_payload,
         attempts=0,
         max_attempts=5
     )

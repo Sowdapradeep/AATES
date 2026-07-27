@@ -54,3 +54,68 @@ def test_split_video_to_chunks(mock_duration, mock_run):
         
         # Ensure it ran ffmpeg exactly 3 times
         assert mock_run.call_count == 3
+
+def test_youtube_video_rate_limit(client):
+    import datetime
+    # 1. Create a youtube_video job for today
+    today_iso = datetime.datetime.now(datetime.UTC).date().isoformat() + "T10:00:00"
+    
+    payload1 = {
+        "content_id": "ep-test-rl-1",
+        "provider": "youtube_video",
+        "priority": 0,
+        "scheduled_at": today_iso,
+        "payload": {"master_reel_path": "fake.mp4"}
+    }
+    res1 = client.post("/v1/publishing/jobs", json=payload1)
+    assert res1.status_code == 200
+    job1_scheduled_at = res1.json()["scheduled_at"]
+    
+    # 2. Create another youtube_video job for the same day
+    payload2 = {
+        "content_id": "ep-test-rl-2",
+        "provider": "youtube_video",
+        "priority": 0,
+        "scheduled_at": today_iso,
+        "payload": {"master_reel_path": "fake2.mp4"}
+    }
+    res2 = client.post("/v1/publishing/jobs", json=payload2)
+    assert res2.status_code == 200
+    job2_scheduled_at = res2.json()["scheduled_at"]
+    
+    # Assert that job2 was rescheduled to the next day!
+    dt1 = datetime.datetime.fromisoformat(job1_scheduled_at.replace("Z", "+00:00"))
+    dt2 = datetime.datetime.fromisoformat(job2_scheduled_at.replace("Z", "+00:00"))
+    assert dt2.date() == dt1.date() + datetime.timedelta(days=1)
+
+def test_segment_schedule_alignment(client):
+    import datetime
+    # 1. Create a youtube_video job
+    today_iso = datetime.datetime.now(datetime.UTC).date().isoformat() + "T12:00:00"
+    payload_main = {
+        "content_id": "ep-test-alignment-5",
+        "provider": "youtube_video",
+        "priority": 0,
+        "scheduled_at": today_iso,
+        "payload": {"master_reel_path": "fake.mp4"}
+    }
+    res_main = client.post("/v1/publishing/jobs", json=payload_main)
+    assert res_main.status_code == 200
+    main_scheduled_at = res_main.json()["scheduled_at"]
+    
+    # 2. Create a youtube_short segment for the same content_id
+    payload_short = {
+        "content_id": "ep-test-alignment-5",
+        "provider": "youtube_short",
+        "priority": 0,
+        "scheduled_at": None,
+        "payload": {"master_reel_path": "fake_short.mp4"}
+    }
+    res_short = client.post("/v1/publishing/jobs", json=payload_short)
+    assert res_short.status_code == 200
+    short_scheduled_at = res_short.json()["scheduled_at"]
+    
+    dt_main = datetime.datetime.fromisoformat(main_scheduled_at.replace("Z", "+00:00"))
+    dt_short = datetime.datetime.fromisoformat(short_scheduled_at.replace("Z", "+00:00"))
+    assert dt_short == dt_main + datetime.timedelta(hours=1)
+

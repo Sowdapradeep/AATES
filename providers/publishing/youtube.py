@@ -225,6 +225,20 @@ class YouTubePublisher(PublishProvider):
                 uploaded_ids = []
                 last_upload_url = None
                 
+                # Base publish time spacing calculation
+                from datetime import datetime as dt_p, timedelta as td_p, timezone as tz_p
+                base_publish_time = None
+                if publish_at:
+                    try:
+                        if isinstance(publish_at, str):
+                            base_publish_time = dt_p.fromisoformat(publish_at.replace("Z", "+00:00"))
+                        elif isinstance(publish_at, dt_p):
+                            base_publish_time = publish_at
+                    except Exception:
+                        pass
+                if not base_publish_time:
+                    base_publish_time = dt_p.now(tz_p.utc)
+
                 try:
                     for idx, chunk_file in enumerate(chunks):
                         part_idx = idx + 1
@@ -250,9 +264,11 @@ class YouTubePublisher(PublishProvider):
                             "privacyStatus": privacy,
                             "selfDeclaredMadeForKids": False
                         }
-                        if publish_at:
-                            status["publishAt"] = publish_at
-                            status["privacyStatus"] = "private"
+                        
+                        # Native YouTube Spacing: space out each segment by 1 hour increments
+                        chunk_publish_at = base_publish_time + td_p(hours=idx)
+                        status["publishAt"] = chunk_publish_at.isoformat()
+                        status["privacyStatus"] = "private"
 
                         body = {
                             "snippet": snippet,
