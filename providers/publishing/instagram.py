@@ -105,12 +105,48 @@ class InstagramPublishingProvider(PublishProvider):
                 "provider": self.name
             }
 
-        async with httpx.AsyncClient() as client:
+        bucket = settings.aws.s3_bucket
+        if master_reel_path.startswith("s3://"):
+            parts = master_reel_path[5:].split("/", 1)
+            bucket = parts[0]
+            key = parts[1]
+        else:
+            key = f"reels/{os.path.basename(master_reel_path)}"
+            try:
+                import boto3
+                session = boto3.Session()
+                s3_client = session.client("s3", region_name=settings.aws.region)
+                logger.info(f"Uploading local file {master_reel_path} to S3 bucket {bucket} at {key}...")
+                s3_client.upload_file(master_reel_path, bucket, key)
+            except Exception as e:
+                logger.error(f"Failed to upload video to S3 for Instagram publishing: {e}")
+                raise
+
+        try:
+            import boto3
+            from botocore.client import Config
+            session = boto3.Session()
+            s3_client = session.client(
+                "s3",
+                region_name=settings.aws.region,
+                config=Config(signature_version="s3v4")
+            )
+            video_url = s3_client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": bucket, "Key": key},
+                ExpiresIn=3600
+            )
+            logger.info(f"Generated S3 pre-signed URL for Instagram: {video_url}")
+        except Exception as e:
+            logger.error(f"Failed to generate S3 pre-signed URL for Instagram: {e}")
+            raise
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
             # 1. Container creation
             post_url = f"https://graph.facebook.com/{self.api_version}/{ig_user_id}/media"
             res = await client.post(post_url, data={
                 "media_type": "REELS",
-                "video_url": "https://s3.amazonaws.com/presigned_video.mp4",
+                "video_url": video_url,
                 "caption": caption,
                 "access_token": access_token
             })
@@ -125,9 +161,25 @@ class InstagramPublishingProvider(PublishProvider):
                     "provider": self.name
                 }
 
-            # 2. Check status
+            # 2. Check status (wait/poll until FINISHED)
             status_url = f"https://graph.facebook.com/{self.api_version}/{container_id}"
-            await client.get(status_url, params={"fields": "status_code", "access_token": access_token})
+            import asyncio
+            
+            max_attempts = 15
+            for attempt in range(max_attempts):
+                status_res = await client.get(status_url, params={"fields": "status_code", "access_token": access_token})
+                status_data = status_res.json()
+                status_code = status_data.get("status_code")
+                logger.info(f"Instagram video processing status: {status_code} (attempt {attempt + 1}/{max_attempts})")
+                
+                if status_code == "FINISHED":
+                    break
+                elif status_code == "ERROR" or status_code == "EXPIRED":
+                    raise Exception(f"Instagram video container failed with status: {status_code}")
+                
+                await asyncio.sleep(5)
+            else:
+                raise Exception("Instagram video container processing timed out")
             
             # 3. Publish container
             pub_url = f"https://graph.facebook.com/{self.api_version}/{ig_user_id}/media_publish"

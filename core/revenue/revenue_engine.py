@@ -195,7 +195,9 @@ class RevenueGenerationEngine:
         meta = {
             "title": title,
             "description": f"{campaign.viral_hook}\n\n{' '.join(campaign.hashtags)}",
-            "tags": campaign.hashtags
+            "tags": campaign.hashtags,
+            "privacy": "public",
+            "safe_production_mode": False
         }
 
         if yt_publisher:

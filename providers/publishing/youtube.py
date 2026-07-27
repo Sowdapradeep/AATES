@@ -9,6 +9,7 @@ import os
 import json
 import logging
 import time
+import asyncio
 from typing import Any
 import httpx
 
@@ -188,8 +189,8 @@ class YouTubePublisher(PublishProvider):
         language = metadata.get("language", "ta")
 
         # Privacy status
-        privacy = metadata.get("privacy", "private")
-        if metadata.get("safe_production_mode", True) or os.getenv("AATES_SAFE_MODE") == "True":
+        privacy = metadata.get("privacy", "public")
+        if metadata.get("safe_production_mode", False) or os.getenv("AATES_SAFE_MODE") == "True":
             privacy = "private"  # Override to private in safe mode
 
         # Schedule publishing if requested

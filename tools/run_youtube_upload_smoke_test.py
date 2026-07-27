@@ -212,10 +212,10 @@ async def main():
         verify_res = await verify_uploaded_video(publisher, video_id)
         
         # Check command line flags to keep/delete video
-        keep_video = "--keep-video" in sys.argv
-        video_deleted = "NO (Retained via --keep-video)" if keep_video else "YES (Auto-cleanup active)"
+        delete_video = "--delete-video" in sys.argv
+        video_deleted = "YES (Cleanup requested via --delete-video)" if delete_video else "NO (Retained by default)"
         
-        if not keep_video:
+        if delete_video:
             # 5. Delete video
             await delete_test_video(publisher, video_id)
             
