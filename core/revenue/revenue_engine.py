@@ -218,7 +218,7 @@ class RevenueGenerationEngine:
             ]
 
         # 2. Iterate and render scene clips using real voice + image synthesis
-                try:
+        try:
             if not skip_rendering:
                 img_provider = image_registry.get_provider("pollinations") or image_registry.get_provider("mock")
                 voice_provider = voice_registry.get_provider("bedrock") or voice_registry.get_provider("mock")
