@@ -214,11 +214,18 @@ class RevenueGenerationEngine:
 
         # 2. Iterate and render scene clips using real voice + image synthesis
         scene_clips = []
+        max_duration = 1800.0  # Max 30 minutes (1800 seconds)
+        current_total_duration = 0.0
+        
         try:
             img_provider = image_registry.get_provider("pollinations") or image_registry.get_provider("mock")
             voice_provider = voice_registry.get_provider("bedrock") or voice_registry.get_provider("mock")
             
-            for idx, scene in enumerate(scenes[:2]):
+            for idx, scene in enumerate(scenes):
+                if current_total_duration >= max_duration:
+                    logger.info(f"Reached maximum episode duration limit of {max_duration} seconds. Stopping scene generation.")
+                    break
+                    
                 dialogue_lines = [d.get("text_tamil") or d.get("text_english", "") for d in scene.get("dialogues", [])]
                 scene_text = " ".join(dialogue_lines) or "Welcome to AATES production series."
                 img_prompt = f"{scene.get('camera_intent', 'Scenic portrait')} in style of {scene.get('visual_style', 'Rustic realism')}, dramatic lighting, 8k resolution, cinematic."
@@ -226,27 +233,34 @@ class RevenueGenerationEngine:
                 # Synthesize voice narration
                 voice_res = await voice_provider.generate(text=scene_text, voice_id="Aditi", options={"language": "ta"})
                 voice_path = voice_res["local_path"]
+                voice_duration_sec = voice_res.get("duration_ms", 5000) / 1000.0
+                
+                # Dynamic scene duration matches the voice audio track duration
+                duration_sec = max(voice_duration_sec, 3.0)
+                if current_total_duration + duration_sec > max_duration:
+                    duration_sec = max_duration - current_total_duration
                 
                 # Generate AI image
                 img_res = await img_provider.generate(prompt=img_prompt, aspect_ratio="16:9", options={})
                 img_path = img_res["local_path"]
                 
-                # Compile scene clip (35 seconds to ensure 2 scenes total 70 seconds)
+                # Compile scene clip (duration matches the voice narration length)
                 clip_path = f"artifacts/video/scene_{idx}_{uuid.uuid4().hex[:6]}.mp4"
                 os.makedirs(os.path.dirname(clip_path), exist_ok=True)
                 
-                # Render using 35 seconds slide with slow zoom
+                # Render using the voice narration duration with slow zoom
                 cmd = [
                     "ffmpeg", "-y",
                     "-loop", "1", "-i", img_path,
                     "-i", voice_path,
-                    "-vf", "scale=1280:720,zoompan=z='zoom+0.0015':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1050:s=1280x720",
-                    "-c:v", "libx264", "-t", "35.0",
+                    "-vf", f"scale=1280:720,zoompan=z='zoom+0.0015':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={int(duration_sec * 30)}:s=1280x720",
+                    "-c:v", "libx264", "-t", str(duration_sec),
                     "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
                     clip_path
                 ]
                 subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 scene_clips.append(clip_path)
+                current_total_duration += duration_sec
 
             # 3. Concatenate scenes into final master reel
             concat_file = f"artifacts/video/concat_{uuid.uuid4().hex[:6]}.txt"
@@ -261,7 +275,7 @@ class RevenueGenerationEngine:
                 video_path
             ]
             subprocess.run(cmd_concat, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            logger.info(f"Successfully compiled real-time AI cinematic slideshow episode at: {video_path}")
+            logger.info(f"Successfully compiled real-time AI cinematic slideshow episode at: {video_path} (Duration: {current_total_duration:.2f}s)")
             
         except Exception as pipeline_err:
             logger.warning(f"Real-time pipeline generation failed: {pipeline_err}. Falling back to dynamic fractal generation.")
