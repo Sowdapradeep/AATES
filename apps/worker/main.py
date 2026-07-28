@@ -8,6 +8,8 @@ from core.narrative.services.universe_service import UniverseService
 from core.narrative.dto.narrative_dto import UniverseCreateDTO
 from core.revenue.revenue_engine import RevenueGenerationEngine
 
+from core.config.secrets import fetch_and_apply_secrets
+
 setup_logging()
 logger = get_logger("worker")
 
@@ -16,6 +18,9 @@ async def main() -> None:
     Main worker daemon execution loop.
     Autonomously executes studio revenue production cycles on scheduled heartbeats.
     """
+    # Fetch credentials from AWS Secrets Manager
+    fetch_and_apply_secrets()
+    
     logger.info(f"Starting AATES Autonomous Production Worker Daemon in '{settings.app.env}' mode...")
 
     # Ensure database schema is ready
