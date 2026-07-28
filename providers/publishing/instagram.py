@@ -3,6 +3,7 @@ import uuid
 import json
 import random
 import logging
+import asyncio
 from typing import Any, List, Optional
 import httpx
 from core.config.settings import settings
