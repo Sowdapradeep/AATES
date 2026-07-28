@@ -218,6 +218,10 @@ class RevenueGenerationEngine:
             ]
 
         # 2. Iterate and render scene clips using real voice + image synthesis
+        scene_clips = []
+        max_duration = 1800.0  # Max 30 minutes (1800 seconds)
+        current_total_duration = 0.0
+
         try:
             if not skip_rendering:
                 img_provider = image_registry.get_provider("pollinations") or image_registry.get_provider("mock")
