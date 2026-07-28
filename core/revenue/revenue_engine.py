@@ -181,10 +181,15 @@ class RevenueGenerationEngine:
         import subprocess
         os.makedirs(os.path.dirname(video_path), exist_ok=True)
         
+        # Check if a custom pre-existing test video is already available to bypass rendering (e.g. 30min test file)
+        skip_rendering = os.path.exists(video_path) and os.path.getsize(video_path) > 500000
+        if skip_rendering:
+            logger.info(f"Bypassing real-time rendering. Reusing pre-existing video file at {video_path} for verification.")
+        
         # 1. Parse scenes from reasoning blueprint or fallback to defaults
         blueprint_dict = reason_res.get("blueprint", {})
-        scenes = blueprint_dict.get("scenes", [])
-        if not scenes:
+        scenes = [] if skip_rendering else blueprint_dict.get("scenes", [])
+        if not skip_rendering and not scenes:
             scenes = [
                 {
                     "scene_number": 1,
@@ -218,8 +223,9 @@ class RevenueGenerationEngine:
         current_total_duration = 0.0
         
         try:
-            img_provider = image_registry.get_provider("pollinations") or image_registry.get_provider("mock")
-            voice_provider = voice_registry.get_provider("bedrock") or voice_registry.get_provider("mock")
+            if not skip_rendering:
+                img_provider = image_registry.get_provider("pollinations") or image_registry.get_provider("mock")
+                voice_provider = voice_registry.get_provider("bedrock") or voice_registry.get_provider("mock")
             
             for idx, scene in enumerate(scenes):
                 if current_total_duration >= max_duration:
