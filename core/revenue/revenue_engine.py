@@ -172,42 +172,129 @@ class RevenueGenerationEngine:
         publishing_results = {}
         video_path = "video/outputs/output_1_preview.mp4"
 
-        # Dynamically generate a valid, real 70-second HD video file using FFmpeg based on episode parameters
-        # This triggers the segment splitting logic and varies the visual fractal / audio tone for each episode
-        freq = 300 + (episode * 40) % 500
-        max_iter = 50 + (episode * 15) % 150
-        duration_sec = 70.0
+        # Dynamically generate a real-time cinematic video using actual AI voice and image providers
+        from providers.image.registry import image_registry
+        from providers.voice.registry import voice_registry
         
         import os
         import base64
         import subprocess
         os.makedirs(os.path.dirname(video_path), exist_ok=True)
+        
+        # 1. Parse scenes from reasoning blueprint or fallback to defaults
+        blueprint_dict = reason_res.get("blueprint", {})
+        scenes = blueprint_dict.get("scenes", [])
+        if not scenes:
+            scenes = [
+                {
+                    "scene_number": 1,
+                    "visual_style": reason_res.get("visual_style", "cinematic rustic realism"),
+                    "camera_intent": "Establishing shot of the Tamil village boundary, panning across ancestral trees.",
+                    "dialogues": [
+                        {
+                            "character_name": "Kadamban",
+                            "text_tamil": "Idhu enga nilam. Ingu ungaluku velai illai.",
+                            "text_english": "This is our land. You have no business here."
+                        }
+                    ]
+                },
+                {
+                    "scene_number": 2,
+                    "visual_style": reason_res.get("visual_style", "cinematic rustic realism"),
+                    "camera_intent": "Close up on corporate official showing the highway construction blueprint map.",
+                    "dialogues": [
+                        {
+                            "character_name": "Nallasamy",
+                            "text_tamil": "Abhivrudhi varumpodhu thadukka mudiyadhu.",
+                            "text_english": "Development cannot be stopped when it comes."
+                        }
+                    ]
+                }
+            ]
+
+        # 2. Iterate and render scene clips using real voice + image synthesis
+        scene_clips = []
         try:
-            cmd = [
+            img_provider = image_registry.get_provider("pollinations") or image_registry.get_provider("mock")
+            voice_provider = voice_registry.get_provider("bedrock") or voice_registry.get_provider("mock")
+            
+            for idx, scene in enumerate(scenes[:2]):
+                dialogue_lines = [d.get("text_tamil") or d.get("text_english", "") for d in scene.get("dialogues", [])]
+                scene_text = " ".join(dialogue_lines) or "Welcome to AATES production series."
+                img_prompt = f"{scene.get('camera_intent', 'Scenic portrait')} in style of {scene.get('visual_style', 'Rustic realism')}, dramatic lighting, 8k resolution, cinematic."
+                
+                # Synthesize voice narration
+                voice_res = await voice_provider.generate(text=scene_text, voice_id="Aditi", options={"language": "ta"})
+                voice_path = voice_res["local_path"]
+                
+                # Generate AI image
+                img_res = await img_provider.generate(prompt=img_prompt, aspect_ratio="16:9", options={})
+                img_path = img_res["local_path"]
+                
+                # Compile scene clip (35 seconds to ensure 2 scenes total 70 seconds)
+                clip_path = f"artifacts/video/scene_{idx}_{uuid.uuid4().hex[:6]}.mp4"
+                os.makedirs(os.path.dirname(clip_path), exist_ok=True)
+                
+                # Render using 35 seconds slide with slow zoom
+                cmd = [
+                    "ffmpeg", "-y",
+                    "-loop", "1", "-i", img_path,
+                    "-i", voice_path,
+                    "-vf", "scale=1280:720,zoompan=z='zoom+0.0015':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1050:s=1280x720",
+                    "-c:v", "libx264", "-t", "35.0",
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
+                    clip_path
+                ]
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                scene_clips.append(clip_path)
+
+            # 3. Concatenate scenes into final master reel
+            concat_file = f"artifacts/video/concat_{uuid.uuid4().hex[:6]}.txt"
+            with open(concat_file, "w") as f:
+                for clip in scene_clips:
+                    f.write(f"file '{os.path.abspath(clip)}'\n")
+            
+            cmd_concat = [
                 "ffmpeg", "-y",
-                "-f", "lavfi", f"-i", f"mandelbrot=s=1280x720:maxiter={max_iter}",
-                "-f", "lavfi", f"-i", f"sine=frequency={freq}:beep_factor=4:r=48000",
-                "-t", str(duration_sec),
-                "-c:v", "libx264", "-pix_fmt", "yuv420p",
-                "-c:a", "aac",
-                "-shortest",
+                "-f", "concat", "-safe", "0", "-i", concat_file,
+                "-c", "copy",
                 video_path
             ]
-            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            logger.info(f"Generated a real dynamic 70s fractal video for Episode {episode} (Freq: {freq}Hz, Iter: {max_iter}) using ffmpeg at: {video_path}")
-        except Exception as ffmpeg_err:
-            logger.warning(f"Failed to generate video with ffmpeg: {ffmpeg_err}. Falling back to base64 stub.")
-            minimal_mp4_b64 = (
-                "AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAr9tZGF0AAACoAYF"
-                "//+///AAAAMmF2Y0MBZAAK/+EAGWdkAAqs2V+WXAWyAAADAAIAAAMAYB4kSywBAAZo6+PLIs"
-                "AAAAAYc3R0cwAAAAAAAAABAAAAAQAAAgAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAEAAAAB"
-                "AAAAFHN0c3oAAAAAAAACtwAAAAEAAAAUc3RjbwAAAAAAAAABAAAAMAAAAGJ1ZHRhAAAAWm"
-                "1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAl"
-                "qXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTQuNjMuMTA0"
-            )
-            with open(video_path, "wb") as f:
-                f.write(base64.b64decode(minimal_mp4_b64 + '=' * (-len(minimal_mp4_b64) % 4)))
-            logger.info(f"Created a valid minimal preview MP4 file at: {video_path}")
+            subprocess.run(cmd_concat, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            logger.info(f"Successfully compiled real-time AI cinematic slideshow episode at: {video_path}")
+            
+        except Exception as pipeline_err:
+            logger.warning(f"Real-time pipeline generation failed: {pipeline_err}. Falling back to dynamic fractal generation.")
+            # Fallback to dynamic zooming Mandelbrot fractal
+            freq = 300 + (episode * 40) % 500
+            max_iter = 50 + (episode * 15) % 150
+            duration_sec = 70.0
+            try:
+                cmd = [
+                    "ffmpeg", "-y",
+                    "-f", "lavfi", f"-i", f"mandelbrot=s=1280x720:maxiter={max_iter}",
+                    "-f", "lavfi", f"-i", f"sine=frequency={freq}:beep_factor=4:r=48000",
+                    "-t", str(duration_sec),
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                    "-c:a", "aac",
+                    "-shortest",
+                    video_path
+                ]
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                logger.info(f"Generated a real dynamic 70s fractal video fallback for Episode {episode} using ffmpeg at: {video_path}")
+            except Exception as ffmpeg_err:
+                logger.warning(f"Failed to generate fractal fallback video with ffmpeg: {ffmpeg_err}. Falling back to base64 stub.")
+                minimal_mp4_b64 = (
+                    "AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAr9tZGF0AAACoAYF"
+                    "//+///AAAAMmF2Y0MBZAAK/+EAGWdkAAqs2V+WXAWyAAADAAIAAAMAYB4kSywBAAZo6+PLIs"
+                    "AAAAAYc3R0cwAAAAAAAAABAAAAAQAAAgAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAEAAAAB"
+                    "AAAAFHN0c3oAAAAAAAACtwAAAAEAAAAUc3RjbwAAAAAAAAABAAAAMAAAAGJ1ZHRhAAAAWm"
+                    "1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAl"
+                    "qXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTQuNjMuMTA0"
+                )
+                with open(video_path, "wb") as f:
+                    f.write(base64.b64decode(minimal_mp4_b64 + '=' * (-len(minimal_mp4_b64) % 4)))
+                logger.info(f"Created a valid minimal preview MP4 file at: {video_path}")
 
         yt_publisher = publishing_registry.get_provider("youtube")
         ig_publisher = publishing_registry.get_provider("instagram")
