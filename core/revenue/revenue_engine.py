@@ -175,19 +175,35 @@ class RevenueGenerationEngine:
         # Dynamically generate a valid minimal MP4 preview video if it is missing or invalid
         import os
         import base64
+        import subprocess
         os.makedirs(os.path.dirname(video_path), exist_ok=True)
         if not os.path.exists(video_path) or os.path.getsize(video_path) < 100:
-            minimal_mp4_b64 = (
-                "AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAr9tZGF0AAACoAYF"
-                "//+///AAAAMmF2Y0MBZAAK/+EAGWdkAAqs2V+WXAWyAAADAAIAAAMAYB4kSywBAAZo6+PLIs"
-                "AAAAAYc3R0cwAAAAAAAAABAAAAAQAAAgAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAEAAAAB"
-                "AAAAFHN0c3oAAAAAAAACtwAAAAEAAAAUc3RjbwAAAAAAAAABAAAAMAAAAGJ1ZHRhAAAAWm"
-                "1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAl"
-                "qXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTQuNjMuMTA0"
-            )
-            with open(video_path, "wb") as f:
-                f.write(base64.b64decode(minimal_mp4_b64 + '=' * (-len(minimal_mp4_b64) % 4)))
-            logger.info(f"Created a valid minimal preview MP4 file at: {video_path}")
+            try:
+                cmd = [
+                    "ffmpeg", "-y",
+                    "-f", "lavfi", "-i", "color=c=black:s=640x360:d=3",
+                    "-f", "lavfi", "-i", "anullsrc=cl=mono:r=44100",
+                    "-t", "3",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                    "-c:a", "aac",
+                    "-shortest",
+                    video_path
+                ]
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                logger.info(f"Generated a valid, processable 3-second MP4 video file using ffmpeg at: {video_path}")
+            except Exception as ffmpeg_err:
+                logger.warning(f"Failed to generate video with ffmpeg: {ffmpeg_err}. Falling back to base64 stub.")
+                minimal_mp4_b64 = (
+                    "AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAr9tZGF0AAACoAYF"
+                    "//+///AAAAMmF2Y0MBZAAK/+EAGWdkAAqs2V+WXAWyAAADAAIAAAMAYB4kSywBAAZo6+PLIs"
+                    "AAAAAYc3R0cwAAAAAAAAABAAAAAQAAAgAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAEAAAAB"
+                    "AAAAFHN0c3oAAAAAAAACtwAAAAEAAAAUc3RjbwAAAAAAAAABAAAAMAAAAGJ1ZHRhAAAAWm"
+                    "1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAl"
+                    "qXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTQuNjMuMTA0"
+                )
+                with open(video_path, "wb") as f:
+                    f.write(base64.b64decode(minimal_mp4_b64 + '=' * (-len(minimal_mp4_b64) % 4)))
+                logger.info(f"Created a valid minimal preview MP4 file at: {video_path}")
 
         yt_publisher = publishing_registry.get_provider("youtube")
         ig_publisher = publishing_registry.get_provider("instagram")
