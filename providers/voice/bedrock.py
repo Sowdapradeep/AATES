@@ -91,23 +91,46 @@ class BedrockVoiceProvider(VoiceProvider):
             start = time.monotonic()
             
             # 1. Synthesize audio speech stream
-            response = self.polly_client.synthesize_speech(
-                Engine="neural",
-                OutputFormat="mp3",
-                Text=text,
-                VoiceId=vid
-            )
+            try:
+                response = self.polly_client.synthesize_speech(
+                    Engine="neural",
+                    OutputFormat="mp3",
+                    Text=text,
+                    VoiceId=vid
+                )
+            except Exception as e:
+                if "engine" in str(e).lower() or "validation" in str(e).lower():
+                    response = self.polly_client.synthesize_speech(
+                        Engine="standard",
+                        OutputFormat="mp3",
+                        Text=text,
+                        VoiceId=vid
+                    )
+                else:
+                    raise e
             with open(filepath, "wb") as f:
                 f.write(response["AudioStream"].read())
 
             # 2. Query speech marks for alignment
-            align_response = self.polly_client.synthesize_speech(
-                Engine="neural",
-                OutputFormat="json",
-                SpeechMarkTypes=["word", "sentence"],
-                Text=text,
-                VoiceId=vid
-            )
+            try:
+                align_response = self.polly_client.synthesize_speech(
+                    Engine="neural",
+                    OutputFormat="json",
+                    SpeechMarkTypes=["word", "sentence"],
+                    Text=text,
+                    VoiceId=vid
+                )
+            except Exception as e:
+                if "engine" in str(e).lower() or "validation" in str(e).lower():
+                    align_response = self.polly_client.synthesize_speech(
+                        Engine="standard",
+                        OutputFormat="json",
+                        SpeechMarkTypes=["word", "sentence"],
+                        Text=text,
+                        VoiceId=vid
+                    )
+                else:
+                    raise e
             
             marks_stream = align_response["AudioStream"].read().decode("utf-8")
             word_alignment = []
