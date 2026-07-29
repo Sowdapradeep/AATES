@@ -5,8 +5,6 @@ from typing import Any
 from sqlalchemy.orm import Session
 from core.database.session import SessionLocal
 from core.database.models import SystemState
-from core.narrative.models.episode import Episode
-from core.narrative.intelligence.bedrock_client import bedrock_intelligence
 from contracts.dto.blueprint import ProductionBlueprint, SceneBlueprint
 from contracts.dto.creative import DialogueLine
 from brain.story_bible.bible import story_bible_engine
@@ -25,13 +23,27 @@ class ProductionBlueprintGenerator:
         db: Session = None
     ) -> ProductionBlueprint:
         """Assembles characters, props, camera intents, and dialogue into a standardized Production Blueprint."""
+        from core.narrative.models.episode import Episode
+        from core.narrative.intelligence.bedrock_client import bedrock_intelligence
+
         session = db or SessionLocal()
         try:
             bible = story_bible_engine.get_bible(universe_id, db=session)
             chars = list(bible.get("characters", {}).keys()) if bible else ["Kadamban", "Nallasamy"]
             
-            # Fetch episode details from DB
-            ep_record = session.query(Episode).filter(Episode.id == episode_id).first()
+            # Fetch episode details from DB (convert to UUID object to avoid SQLite StatementError during tests)
+            import uuid as uuid_pkg
+            ep_record = None
+            if isinstance(episode_id, uuid_pkg.UUID):
+                ep_record = session.query(Episode).filter(Episode.id == episode_id).first()
+            elif isinstance(episode_id, str):
+                try:
+                    uuid_obj = uuid_pkg.UUID(episode_id)
+                    ep_record = session.query(Episode).filter(Episode.id == uuid_obj).first()
+                except ValueError:
+                    # Invalid UUID string (e.g. test dummies like 'ep-101'), skip DB query
+                    pass
+
             ep_title = ep_record.title if ep_record else "Rising indignation"
             ep_beats = ep_record.story_beats if ep_record else []
             
