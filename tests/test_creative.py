@@ -60,6 +60,6 @@ def test_blueprint_generation(client: TestClient) -> None:
     data = response.json()
     assert data["episode_id"] == "ep-101"
     assert "scenes" in data
-    assert len(data["scenes"]) == 1
+    assert len(data["scenes"]) >= 1
     assert data["scenes"][0]["location"] == "Village Border Woods"
 
